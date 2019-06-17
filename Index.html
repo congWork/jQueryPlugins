@@ -1,0 +1,82 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="apple-touch-icon" href="icon.png">
+ 
+</head>
+
+<body>
+    <table id="example" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th><input type="checkbox" name="chkAll"/></th>
+                <th>Id</th>
+                <th>ccEmail</th>
+                <th>Name</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+      
+    </table>
+
+    <div>
+        <ul>
+<li> <button id="first">First</button></li>
+<li> <button id="prePage">Pre</button></li>
+<li><select id="selectedPage">
+  
+
+</select></li>
+<li> <button id="nextPage">Next</button></li>
+<li> <button id="last">Last</button></li>
+        </ul>
+       
+    </div>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+
+    <script src="js/jquery.ccdatatable.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            var options={
+               paginationControls:{
+                       firstPageControlId: 'first',
+                       lastPageControlId: 'last',
+                       prePageControlId:'prePage',
+                       nextPageControlId: 'nextPage',
+                       selectedPageControlId: 'selectedPage'
+                },
+                ajax: {
+                    url: 'https://jsonplaceholder.typicode.com/comments',
+                    dataSrc: ''
+                },
+                columns: [ 
+                    {
+                        "render": function (data, type, full, meta) {
+                            return '<input type="checkbox" name="chkAll"/>';
+                        }
+                    },
+                    {"data": "id"},
+                    { "data": "name" },
+                    {"data": "email"},
+                    {
+                        "render": function (data, type, full, meta) {
+                            return '<a class="btn btn-warning">Remove</a>';
+                        }
+                    }
+                ]
+           };
+            $('#example').CcDataTable(options);
+        });
+       
+    </script>
+</body>
+
+</html>
