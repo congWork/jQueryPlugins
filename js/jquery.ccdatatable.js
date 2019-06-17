@@ -14,13 +14,16 @@
 		// minified (especially when both are regularly referenced in your plugin).
 
 		// Create the defaults once
+		var pCtrlContainerId='#PaginationControlsContainer';
 		var pluginName = "CcDataTable",
 			defaults = {
-				
+				"dom": '<"#cc_topDiv.row"<"half"<"itemHeader">><"half"f>>r<"formTemplate1"<"panelMainTemplate"t>><"noRecordFound"><"#cc_bottomDiv"<"'+pCtrlContainerId+'">i>',
+				pagCtrlContainerId: pCtrlContainerId
 			};
 
 		// The actual plugin constructor
 		function Plugin ( element, options ) {
+			var me= this;
 			this.element = element;
 	
 			// jQuery has an extend method which merges the contents of two or
@@ -31,16 +34,15 @@
 			this._defaults = defaults;
 			this._name = pluginName;
 
-			this.table= $(this.element).DataTable(this.settings);
-
-			
-	        var pControls=this.settings.paginationControls;
+			var pControls=this.settings.paginationControls;
 			$.each(pControls,function(k,v){
 				pControls[k]= v.charAt(0)==='#' ? v : '#'+v;
 			});
-			console.log(this.settings.paginationControls);
 	
-			this.init();
+			this.table= $(this.element).on( 'init.dt', function (){
+				me.init();
+			}).DataTable(this.settings);
+
 		}
 
 		// Avoid Plugin.prototype conflicts
@@ -66,34 +68,34 @@
 				var lastId=  this.settings.paginationControls.lastPageControlId;
 				var nextId=  this.settings.paginationControls.nextPageControlId;
 				var info = me.table.page.info();
+				console.log('page info: ', info);
+				//set current page on the dropdown list
+				$(selectId).val(info.page);
 
-					//set current page on the dropdown list
-					$(selectId).val(info.page);
+				var currentPage= info.page +1;
 
-					var currentPage= info.page +1;
+				console.log('current page# '+ currentPage+'/'+info.pages);
+				var hasPrePage= (currentPage-1) >0;
+				if(hasPrePage){
+					//enable prev and first
+					$(firstId).attr('disabled',false);
+					$(preId).attr('disabled',false);
+				}else{
+					//disable
+					$(firstId).attr('disabled',true);
+					$(preId).attr('disabled',true);
+				}
 
-					console.log('current page# '+ currentPage+'/'+info.pages);
-					var hasPrePage= (currentPage-1) >0;
-					if(hasPrePage){
-						//enable prev and first
-						$(firstId).attr('disabled',false);
-						$(preId).attr('disabled',false);
-					}else{
-						//disable
-						$(firstId).attr('disabled',true);
-						$(preId).attr('disabled',true);
-					}
-
-					var hasNextPage= (info.pages -currentPage) >0;
-					if(hasNextPage){
-						//enable next and last
-						$(lastId).attr('disabled',false);
-						$(nextId).attr('disabled',false);
-					}else{
-						//disable
-						$(lastId).attr('disabled',true);
-						$(nextId).attr('disabled',true);
-					}
+				var hasNextPage= (info.pages -currentPage) >0;
+				if(hasNextPage){
+					//enable next and last
+					$(lastId).attr('disabled',false);
+					$(nextId).attr('disabled',false);
+				}else{
+					//disable
+					$(lastId).attr('disabled',true);
+					$(nextId).attr('disabled',true);
+				}
 					
 			},
 			setupEventsListener: function(){
@@ -151,16 +153,20 @@
 
 				me.enableOrDisablePaginationControls();
 
-				//create dropdown list
-				var selectedPageId=  this.settings.paginationControls.selectedPageControlId;
-				var $select= $(selectedPageId);
+				//set up pagination controls toolbar
+				if(this.settings.paginationHtmlTemplate){
+					$(me._defaults.pagCtrlContainerId).html(this.settings.paginationHtmlTemplate);
+					//create dropdown list
+					var selectedPageId=  this.settings.paginationControls.selectedPageControlId;
+					var $select= $(selectedPageId);
 
-				$select.empty();
-				for(var i=0; i<totalPages; i++){
-					var optElement= document.createElement('option');
-					optElement.value=i;
-					optElement.text=i+1;
-					$select.append(optElement);
+					$select.empty();
+					for(var i=0; i<totalPages; i++){
+						var optElement= document.createElement('option');
+						optElement.value=i;
+						optElement.text=i+1;
+						$select.append(optElement);
+					}
 				}
 			},
 

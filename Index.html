@@ -26,7 +26,15 @@
       
     </table>
 
-    <div>
+    
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+
+    <script src="js/jquery.ccdatatable.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            var options={
+                paginationHtmlTemplate:`<div">
         <ul>
 <li> <button id="first">First</button></li>
 <li> <button id="prePage">Pre</button></li>
@@ -38,14 +46,7 @@
 <li> <button id="last">Last</button></li>
         </ul>
        
-    </div>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
-
-    <script src="js/jquery.ccdatatable.js"></script>
-    <script type="text/javascript">
-        $(function(){
-            var options={
+    </div>`,
                paginationControls:{
                        firstPageControlId: 'first',
                        lastPageControlId: 'last',
@@ -68,12 +69,14 @@
                     {"data": "email"},
                     {
                         "render": function (data, type, full, meta) {
-                            return '<a class="btn btn-warning">Remove</a>';
+                            return '<a class="btn btn-warning">View/Edit</a>';
                         }
                     }
-                ]
+                ],
+                
            };
-            $('#example').CcDataTable(options);
+           $('#example').CcDataTable(options);
+
         });
        
     </script>
