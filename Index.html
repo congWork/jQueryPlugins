@@ -13,6 +13,7 @@
 </head>
 
 <body>
+    <button class="myClick">Search</button>
     <table id="example" class="display" style="width:100%">
         <thead>
             <tr>
@@ -34,6 +35,11 @@
     <script type="text/javascript">
         $(function(){
             var options={
+                search:{
+                    action: function(column){
+                       column(1).search('1').draw();
+                    }
+                },
                 paginationHtmlTemplate:`<div">
         <ul>
 <li> <button id="first">First</button></li>
@@ -61,7 +67,7 @@
                 columns: [ 
                     {
                         "render": function (data, type, full, meta) {
-                            return '<input type="checkbox" name="chkAll"/>';
+                            return '<input type="checkbox" name="chk'+full.id+'" class="chk"/>';
                         }
                     },
                     {"data": "id"},

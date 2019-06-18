@@ -42,6 +42,7 @@
 			this.table= $(this.element).on( 'init.dt', function (){
 				me.init();
 			}).DataTable(this.settings);
+	
 
 		}
 
@@ -101,7 +102,9 @@
 			setupEventsListener: function(){
 				var me= this;
 				var totalPages= me.getTotalPages();
-
+$('.myClick').on('click',function(){
+	me.settings.search.action.call(me,me.table.column());
+});
 				//on page(records per page) length changed event
 				me.table.on( 'length.dt', function ( e, settings, len ) {
 					console.log( 'New page length: '+len );
@@ -150,7 +153,8 @@
 			initPaginationControls: function() {
 				var me =this;
 				var totalPages= me.getTotalPages();
-
+			
+				
 				me.enableOrDisablePaginationControls();
 
 				//set up pagination controls toolbar
