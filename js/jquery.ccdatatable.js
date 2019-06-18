@@ -17,7 +17,7 @@
 		var pCtrlContainerId='#PaginationControlsContainer';
 		var pluginName = "CcDataTable",
 			defaults = {
-				"dom": '<"#cc_topDiv.row"<"half"<"itemHeader">><"half"f>>r<"formTemplate1"<"panelMainTemplate"t>><"noRecordFound"><"#cc_bottomDiv"<"'+pCtrlContainerId+'">i>',
+				//"dom": '<"#cc_topDiv.row"<"half"<"itemHeader">><"half"f>>r<"formTemplate1"<"panelMainTemplate"t>><"noRecordFound"><"#cc_bottomDiv"<"'+pCtrlContainerId+'">i>',
 				pagCtrlContainerId: pCtrlContainerId
 			};
 
@@ -38,7 +38,45 @@
 			$.each(pControls,function(k,v){
 				pControls[k]= v.charAt(0)==='#' ? v : '#'+v;
 			});
-	
+			
+			//create dom
+			me._defaults.dom="";
+			$.map(me.settings.sections,function(v,k){
+				console.log(v,k);
+				var isTable= v.type ? v.type.toLowerCase()==='table' : false;
+				var id= v.id ? '#'+v.id : '#'+me.getUniqueId(k);
+				var className= v.class ? '.'+v.class : '';
+
+				var startTag= '<';
+				var endTag='>';
+				if(isTable){
+					me._defaults.dom+="t";
+					endTag="";
+				}else{
+					me._defaults.dom+= startTag+'"'+id+className+'"';
+				}
+
+				$.map(v.children,function(cv,ck){
+					var isTable1= cv.type ? cv.type.toLowerCase()==='table' : false;
+					var cid= v.id ? '#'+cv.id : '#'+me.getUniqueId(ck);
+					var cclassName= cv.class ? '.'+cv.class : '';
+					if(isTable1){
+						me._defaults.dom+="t";
+					}else{
+						me._defaults.dom+= startTag+'"'+cid+cclassName+'">';
+					}
+					
+				});
+
+				me._defaults.dom+= endTag;
+
+				
+			});
+			this.settings.dom=me._defaults.dom;
+
+			console.log(me._defaults.dom);
+
+			
 			this.table= $(this.element).on( 'init.dt', function (){
 				me.init();
 			}).DataTable(this.settings);
@@ -59,6 +97,9 @@
 				this.initPaginationControls();
 				this.setupEventsListener();
 				
+			},
+			getUniqueId: function(key){
+				return 'id_'+key+'_'+new Date().getMilliseconds();
 			},
 			enableOrDisablePaginationControls: function(){
 				var me= this;
@@ -102,9 +143,7 @@
 			setupEventsListener: function(){
 				var me= this;
 				var totalPages= me.getTotalPages();
-$('.myClick').on('click',function(){
-	me.settings.search.action.call(me,me.table.column());
-});
+
 				//on page(records per page) length changed event
 				me.table.on( 'length.dt', function ( e, settings, len ) {
 					console.log( 'New page length: '+len );
@@ -157,9 +196,24 @@ $('.myClick').on('click',function(){
 				
 				me.enableOrDisablePaginationControls();
 
-				//set up pagination controls toolbar
-				if(this.settings.paginationHtmlTemplate){
-					$(me._defaults.pagCtrlContainerId).html(this.settings.paginationHtmlTemplate);
+				//after datatable init, render elements for each session
+				var children= $.map(me.settings.sections,function(v,k){
+					if(v.children && v.children.length>0){
+						return v.children;
+					}
+				});
+				console.log('children: ',children);
+
+				$.map(children,function(v,k){
+					var isTable= v.type ? v.type.toLowerCase()==='table' : false;
+					if(!isTable){
+						console.log(v.id);
+
+						v.render.call(this,document.querySelector('#'+v.id));
+					}
+				});
+
+				//set up pagination controls
 					//create dropdown list
 					var selectedPageId=  this.settings.paginationControls.selectedPageControlId;
 					var $select= $(selectedPageId);
@@ -171,7 +225,9 @@ $('.myClick').on('click',function(){
 						optElement.text=i+1;
 						$select.append(optElement);
 					}
-				}
+
+					$(this.settings.paginationControls.totalRecordsControlId).html("Total Records : "+this.table.page.info().recordsTotal);
+				
 			},
 
 		} );
