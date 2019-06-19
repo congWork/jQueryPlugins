@@ -9,7 +9,7 @@
 
   <link rel="manifest" href="site.webmanifest">
   <link rel="apple-touch-icon" href="icon.png">
- 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
 </head>
 
 <body>
@@ -41,18 +41,7 @@
        
     </div>
 -->
-    <div class="pagination">
-        <div class="totalRecords" id='totalRecords'>Total Records : 0</div>
-        <div class="paginationTools">
-          <button class="fa fa-fast-backward paginationIcon paginationDisabled" id="first"></button>
-          <button class="fa fa-step-backward paginationIcon paginationDisabled" id="prePage"></button>
-          <select id="selectedPage">
 
-          </select>
-          <button class="fa fa-step-forward paginationIcon" id="nextPage"></button>
-          <button class="fa fa-fast-forward paginationIcon" id="last"></button>
-        </div>
-      </div>
     
     
 </script>
@@ -75,6 +64,13 @@
                                     render: function(element){
                                         $(element).html('<span><h2>Table Title</h2><span>');
                                     }
+                                },
+                                {
+                                    id: "s1-2",
+                                    class: "search",
+                                    render: function(element){
+                                        $(element).html('<div><input type="text" name="searchInput"/>Search</div>');
+                                    }
                                 }
                             ]
                         },
@@ -84,6 +80,24 @@
                             children:[
                                 {
                                     type: 'table'
+                                },
+                                {
+                                    id: "s2-2",
+                                    class: "recordNotFound",
+                                    render: function(element){
+                                        $(element).html('<p>No Records found</p>');
+                                        $(document).bind('onTotalPageChanged',function(e,d){
+                                            console.log('kk'+d);
+                                            
+                                            if(d>0){
+                                                $(element).show();
+                                            }else{
+                                                $(element).hide();
+                                            }
+                                        });
+                                    }
+                                   
+
                                 }
                             ]
                         },
@@ -94,11 +108,7 @@
                                 {
                                     type: 'pagination-select',
                                     id: "s3-1",
-                                    class: "paginationDiv",
-                                    render: function(element){
-                                        var pCtrlHtmlTemplate=$('#pCtrlTemplate').html();
-                                        $(element).html(pCtrlHtmlTemplate);
-                                    }
+                                    class: "pagination"
                                 }
                             ]
                         }
@@ -108,14 +118,7 @@
                        column(1).search('1').draw();
                     }
                 },
-               paginationControls:{
-                       firstPageControlId: 'first',
-                       lastPageControlId: 'last',
-                       prePageControlId:'prePage',
-                       nextPageControlId: 'nextPage',
-                       selectedPageControlId: 'selectedPage',
-                       totalRecordsControlId: 'totalRecords'
-                },
+               
                 ajax: {
                     url: 'https://jsonplaceholder.typicode.com/comments',
                     dataSrc: ''

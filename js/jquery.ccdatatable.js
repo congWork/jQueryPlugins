@@ -15,6 +15,23 @@
 
 		// Create the defaults once
 		var pCtrlContainerId='#PaginationControlsContainer';
+
+		var paginationTemplate='<div class="totalRecords" id="totalRecords">Total Records : 0</div> \
+        <div class="paginationTools"> \
+          <button class="fa fa-fast-backward paginationIcon paginationDisabled" id="first"></button> \
+		  <button class="fa fa-step-backward paginationIcon paginationDisabled" id="prePage"></button> \
+          <select id="selectedPage"></select> \
+          <button class="fa fa-step-forward paginationIcon" id="nextPage"></button> \
+          <button class="fa fa-fast-forward paginationIcon" id="last"></button> \
+		</div>';
+		var paginationControls={
+			firstPageControlId: 'first',
+			lastPageControlId: 'last',
+			prePageControlId:'prePage',
+			nextPageControlId: 'nextPage',
+			selectedPageControlId: 'selectedPage',
+			totalRecordsControlId: 'totalRecords'
+	 };
 		var pluginName = "CcDataTable",
 			defaults = {
 				//"dom": '<"#cc_topDiv.row"<"half"<"itemHeader">><"half"f>>r<"formTemplate1"<"panelMainTemplate"t>><"noRecordFound"><"#cc_bottomDiv"<"'+pCtrlContainerId+'">i>',
@@ -34,6 +51,7 @@
 			this._defaults = defaults;
 			this._name = pluginName;
 
+			this.settings.paginationControls=paginationControls;
 			var pControls=this.settings.paginationControls;
 			$.each(pControls,function(k,v){
 				pControls[k]= v.charAt(0)==='#' ? v : '#'+v;
@@ -41,40 +59,9 @@
 			
 			//create dom
 			me._defaults.dom="";
-			$.map(me.settings.sections,function(v,k){
-				console.log(v,k);
-				var isTable= v.type ? v.type.toLowerCase()==='table' : false;
-				var id= v.id ? '#'+v.id : '#'+me.getUniqueId(k);
-				var className= v.class ? '.'+v.class : '';
+			this.settings.dom=me.getCustomDom();
 
-				var startTag= '<';
-				var endTag='>';
-				if(isTable){
-					me._defaults.dom+="t";
-					endTag="";
-				}else{
-					me._defaults.dom+= startTag+'"'+id+className+'"';
-				}
-
-				$.map(v.children,function(cv,ck){
-					var isTable1= cv.type ? cv.type.toLowerCase()==='table' : false;
-					var cid= v.id ? '#'+cv.id : '#'+me.getUniqueId(ck);
-					var cclassName= cv.class ? '.'+cv.class : '';
-					if(isTable1){
-						me._defaults.dom+="t";
-					}else{
-						me._defaults.dom+= startTag+'"'+cid+cclassName+'">';
-					}
-					
-				});
-
-				me._defaults.dom+= endTag;
-
-				
-			});
-			this.settings.dom=me._defaults.dom;
-
-			console.log(me._defaults.dom);
+			console.log(this.settings.dom);
 
 			
 			this.table= $(this.element).on( 'init.dt', function (){
@@ -97,6 +84,47 @@
 				this.initPaginationControls();
 				this.setupEventsListener();
 				
+			},
+			getCustomDom: function(){
+				var me=this;
+				var domArray=[];
+
+				$.map(me.settings.sections,function(v,k){
+					console.log(v,k);
+					var isTable= v.type ? v.type.toLowerCase()==='table' : false;
+					
+					var id= v.id ? '#'+v.id : '#'+me.getUniqueId(k);
+					var className= v.class ? '.'+v.class : '';
+	
+					var startTag= '<';
+					var endTag='>';
+
+					if(isTable){
+						domArray.push("t");
+						endTag="";
+					}else{
+						domArray.push(startTag);
+						domArray.push('"');
+						domArray.push(id);
+						domArray.push(className+'"');
+					}
+	
+					$.map(v.children,function(cv,ck){
+						var isTable1= cv.type ? cv.type.toLowerCase()==='table' : false;
+						var cid= v.id ? '#'+cv.id : '#'+me.getUniqueId(ck);
+						var cclassName= cv.class ? '.'+cv.class : '';
+						if(isTable1){
+							domArray.push("t");
+						}else{
+							domArray.push(startTag+'"'+cid+cclassName+'">');
+						}
+					});
+	
+					domArray.push(endTag);
+	
+					
+				});
+				return domArray.join('');
 			},
 			getUniqueId: function(key){
 				return 'id_'+key+'_'+new Date().getMilliseconds();
@@ -143,7 +171,10 @@
 			setupEventsListener: function(){
 				var me= this;
 				var totalPages= me.getTotalPages();
-
+me.table.on( 'draw.dt', function () {
+	
+	$(document).trigger("onTotalPageChanged",0);
+});
 				//on page(records per page) length changed event
 				me.table.on( 'length.dt', function ( e, settings, len ) {
 					console.log( 'New page length: '+len );
@@ -208,8 +239,13 @@
 					var isTable= v.type ? v.type.toLowerCase()==='table' : false;
 					if(!isTable){
 						console.log(v.id);
-
+						if(v.render)
 						v.render.call(this,document.querySelector('#'+v.id));
+					}
+					
+					var type=v.type || '';
+					if(type.toLowerCase()==='pagination-select'){
+						$('#'+v.id).html(paginationTemplate);
 					}
 				});
 
