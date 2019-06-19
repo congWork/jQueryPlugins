@@ -25,24 +25,30 @@
         </thead>
       
     </table>
-<script type="text/template" id="pCtrlTemplate">
-    <!--
-    <div>
-        <ul>
-<li> <button id="first">First</button></li>
-<li> <button id="prePage">Pre</button></li>
-<li><select id="selectedPage">
-  
+<script type="text/template" id="searchTemplate">
 
-</select></li>
-<li> <button id="nextPage">Next</button></li>
-<li> <button id="last">Last</button></li>
-        </ul>
-       
-    </div>
--->
 
-    
+    <div class="rowTableSearch container">
+        <div class="row">
+          <div class="searchField">
+            <label for="searchEmployee">Search</label>
+            <select id="searchEmployee">
+              <option selected value='1'>Date</option>
+              <option value='2'>Template Name</option>
+              <option value='3'>Business Title</option>
+              <option value='4'>Work Unit</option>
+              <option value='5'>Etc</option>
+            </select>
+          </div>
+          <div id="searchFieldText" class="validationError">
+            <input type="text" id="searchEmployeeBox" title="Employee Search Box" aria-required="true">
+              <span class="errorInlineMessage">Required</span>
+            </div>
+          <div class="fifth">
+            <input name="Search" type="button" value="Search" class="btnHPD btnLarge animated">
+          </div>
+        </div>
+      </div>
     
 </script>
   
@@ -68,8 +74,13 @@
                                 {
                                     id: "s1-2",
                                     class: "search",
-                                    render: function(element){
-                                        $(element).html('<div><input type="text" name="searchInput"/>Search</div>');
+                                    render: function(element,messageBus){
+                                        $(element).html($('#searchTemplate').html());
+                                        $('input[name="Search"]').on('click',function(){
+                                            var searchBy= $('#searchEmployee').val();
+                                            var searchTerm=$('#searchEmployeeBox').val();
+                                            messageBus.publish('onSearch',{searchBy: searchBy,searchTerm: searchTerm});
+                                        });
                                     }
                                 }
                             ]
@@ -84,20 +95,18 @@
                                 {
                                     id: "s2-2",
                                     class: "recordNotFound",
-                                    render: function(element){
+                                    render: function(element,messageBus){
                                         $(element).html('<p>No Records found</p>');
-                                        $(document).bind('onTotalPageChanged',function(e,d){
-                                            console.log('kk'+d);
-                                            
-                                            if(d>0){
+
+                                       messageBus.subscribe('onTotalPageChanged',function(e,totalPage){
+                                           console.log('onTotalPageChanged',e,totalPage<1);
+                                            if(totalPage<1){
                                                 $(element).show();
                                             }else{
                                                 $(element).hide();
                                             }
-                                        });
+                                       });
                                     }
-                                   
-
                                 }
                             ]
                         },

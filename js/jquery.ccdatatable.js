@@ -1,5 +1,3 @@
-// the semi-colon before function invocation is a safety net against concatenated
-// scripts and/or other plugins which may not be closed properly.
 ;( function( $, window, document, undefined ) {
 
 	"use strict";
@@ -37,6 +35,21 @@
 				//"dom": '<"#cc_topDiv.row"<"half"<"itemHeader">><"half"f>>r<"formTemplate1"<"panelMainTemplate"t>><"noRecordFound"><"#cc_bottomDiv"<"'+pCtrlContainerId+'">i>',
 				pagCtrlContainerId: pCtrlContainerId
 			};
+		
+		function GetMessageBus(){
+			var bus={};
+			var o = $({});
+			$.each({
+				trigger: 'publish',
+				on: 'subscribe',
+				off: 'unsubscribe'
+			}, function(key, val) {
+				bus[val] = function() {
+					o[key].apply(o, arguments);
+				};
+			});
+			return bus;
+		}
 
 		// The actual plugin constructor
 		function Plugin ( element, options ) {
@@ -67,8 +80,10 @@
 			this.table= $(this.element).on( 'init.dt', function (){
 				me.init();
 			}).DataTable(this.settings);
-	
 
+			this._messageBus= GetMessageBus();
+	
+			
 		}
 
 		// Avoid Plugin.prototype conflicts
@@ -81,6 +96,7 @@
 				// and this.settings
 				// you can add more functions like the one below and
 				// call them like the example below
+				this.setupCustomMessageHandler();
 				this.initPaginationControls();
 				this.setupEventsListener();
 				
@@ -168,13 +184,32 @@
 				}
 					
 			},
+			setupCustomMessageHandler: function(){
+				var me= this;
+
+				me._messageBus.subscribe('onSearch',function(){
+					console.log('on search', arguments);
+					var searchBy= arguments[1].searchBy || "";
+					var searchTerm= arguments[1].searchTerm || "";
+					me.table.columns(searchBy).search(searchTerm).draw();
+				});
+				
+				me._messageBus.subscribe('onTotalRecordsChanged',function(){
+					var totalRecords= arguments[1] || 0;
+					console.log('onTotalRecordsChanged',totalRecords);
+					$(me.settings.paginationControls.totalRecordsControlId).html("Total Records : "+ totalRecords);
+				});
+			},
 			setupEventsListener: function(){
 				var me= this;
+
 				var totalPages= me.getTotalPages();
-me.table.on( 'draw.dt', function () {
-	
-	$(document).trigger("onTotalPageChanged",0);
-});
+
+				me.table.on('draw.dt', function () {
+					me._messageBus.publish('onTotalRecordsChanged',me.table.page.info().recordsDisplay);
+					me._messageBus.publish('onTotalPageChanged',me.getTotalPages());
+					//$(document).trigger("onTotalPageChanged",totalPages);
+				});
 				//on page(records per page) length changed event
 				me.table.on( 'length.dt', function ( e, settings, len ) {
 					console.log( 'New page length: '+len );
@@ -238,9 +273,8 @@ me.table.on( 'draw.dt', function () {
 				$.map(children,function(v,k){
 					var isTable= v.type ? v.type.toLowerCase()==='table' : false;
 					if(!isTable){
-						console.log(v.id);
 						if(v.render)
-						v.render.call(this,document.querySelector('#'+v.id));
+						v.render.call(this,document.querySelector('#'+v.id),me._messageBus);
 					}
 					
 					var type=v.type || '';
@@ -262,7 +296,9 @@ me.table.on( 'draw.dt', function () {
 						$select.append(optElement);
 					}
 
-					$(this.settings.paginationControls.totalRecordsControlId).html("Total Records : "+this.table.page.info().recordsTotal);
+					me._messageBus.publish('onTotalRecordsChanged',this.table.page.info().recordsTotal);
+					me._messageBus.publish('onTotalPageChanged',me.getTotalPages());
+					console.log(this.table.page.info().recordsTotal);
 				
 			},
 
