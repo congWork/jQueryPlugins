@@ -14,14 +14,7 @@
 		// Create the defaults once
 		var pCtrlContainerId='#PaginationControlsContainer';
 
-		var paginationTemplate='<div class="totalRecords" id="totalRecords">Total Records : 0</div> \
-        <div class="paginationTools"> \
-          <button class="fa fa-fast-backward paginationIcon paginationDisabled" id="first"></button> \
-		  <button class="fa fa-step-backward paginationIcon paginationDisabled" id="prePage"></button> \
-          <select id="selectedPage"></select> \
-          <button class="fa fa-step-forward paginationIcon" id="nextPage"></button> \
-          <button class="fa fa-fast-forward paginationIcon" id="last"></button> \
-		</div>';
+		
 		var paginationControls={
 			firstPageControlId: 'first',
 			lastPageControlId: 'last',
@@ -50,12 +43,22 @@
 			});
 			return bus;
 		}
+		
 
 		// The actual plugin constructor
 		function Plugin ( element, options ) {
 			var me= this;
 			this.element = element;
 	
+			this.paginationTemplate='<div class="totalRecords" id="{{totalRecordsControlId}}">Total Records : 0</div> \
+        <div class="paginationTools"> \
+          <button class="fa fa-fast-backward paginationIcon paginationDisabled" id="{{firstPageControlId}}"></button> \
+		  <button class="fa fa-step-backward paginationIcon paginationDisabled" id="{{prePageControlId}}"></button> \
+          <select id="{{selectedPageControlId}}"></select> \
+          <button class="fa fa-step-forward paginationIcon" id="{{nextPageControlId}}"></button> \
+          <button class="fa fa-fast-forward paginationIcon" id="{{lastPageControlId}}"></button> \
+		</div>';
+
 			// jQuery has an extend method which merges the contents of two or
 			// more objects, storing the result in the first object. The first object
 			// is generally empty as we don't want to alter the default options for
@@ -64,7 +67,15 @@
 			this._defaults = defaults;
 			this._name = pluginName;
 
+			//create unique id for each pagination control and apply id to the template
+			$.map(paginationControls,function(v,k){
+				v=me.getUniqueId(v);
+				me.paginationTemplate = me.replaceKeyWithValue(me.paginationTemplate,k,v);
+			});
+			console.log(this.element.id+' paginationTemplate: ',me.paginationTemplate);
+
 			this.settings.paginationControls=paginationControls;
+
 			var pControls=this.settings.paginationControls;
 			$.each(pControls,function(k,v){
 				pControls[k]= v.charAt(0)==='#' ? v : '#'+v;
@@ -101,6 +112,10 @@
 				this.initPaginationControls();
 				this.setupEventsListener();
 				
+			},
+			replaceKeyWithValue: function(inputStringTemplate,key,value){
+				var regex = new RegExp("{{"+key+"}}", "gi");
+				return inputStringTemplate.replace(regex, value);
 			},
 			getCustomDom: function(){
 				var me=this;
@@ -151,7 +166,8 @@
 				return domArray.join('');
 			},
 			getUniqueId: function(key){
-				return 'id_'+key+'_'+new Date().getMilliseconds();
+				var randNum= Math.floor((Math.random() * 1000) + 1);
+				return 'id_'+key+'_'+new Date().valueOf()+'_'+randNum;
 			},
 			enableOrDisablePaginationControls: function(){
 				var me= this;
@@ -196,7 +212,7 @@
 				var me= this;
 
 				me._messageBus.subscribe('onSearch',function(){
-					console.log('on search', arguments);
+					console.log(me.element.id+'=>on search', arguments);
 					var searchBy= arguments[1].searchBy || "";
 					var searchTerm= arguments[1].searchTerm || "";
 					me.table.columns(searchBy).search(searchTerm).draw();
@@ -293,7 +309,7 @@
 					var type=v.type || '';
 					if(type.toLowerCase()==='pagination-select'){
 						var el=me.getElementWithinRootContainerByClass(v.class);
-						$(el).html(paginationTemplate);
+						$(el).html(me.paginationTemplate);
 					}
 				});
 
@@ -321,10 +337,14 @@
 		// A really lightweight plugin wrapper around the constructor,
 		// preventing against multiple instantiations
 		$.fn[ pluginName ] = function( options ) {
+			
+			var instanceName=pluginName+ '_'+ this.selector.trim();
+			
 			return this.each( function() {
-				if ( !$.data( this, "plugin_" + pluginName ) ) {
+				if ( !$.data( this, "plugin_" + instanceName ) ) {
+					console.log('creating plugin instance: ',instanceName);
 					$.data( this, "plugin_" +
-						pluginName, new Plugin( this, options ) );
+						instanceName, new Plugin( this, options ) );
 				}
 			} );
 		};
