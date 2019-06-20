@@ -25,6 +25,47 @@
         </thead>
       
     </table>
+
+    <table id="example2" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th><input type="checkbox" name="chkAll"/></th>
+                <th>Id</th>
+                <th>ccEmail</th>
+                <th>Name</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+      
+    </table>
+
+    <script type="text/template" id="searchTemplate2">
+
+
+        <div class="rowTableSearch container" id="s2">
+            <div class="row">
+              <div class="searchField">
+                <label for="searchEmployee">Search</label>
+                <select id="searchEmployee">
+                  <option selected value='1'>Date</option>
+                  <option value='2'>Template Name</option>
+                  <option value='3'>Business Title</option>
+                  <option value='4'>Work Unit</option>
+                  <option value='5'>Etc</option>
+                </select>
+              </div>
+              <div id="searchFieldText" class="validationError">
+                <input type="text" id="searchEmployeeBox" title="Employee Search Box" aria-required="true">
+                  <span class="errorInlineMessage">Required</span>
+                </div>
+              <div class="fifth">
+                <input name="Search" type="button" value="Search" class="btnHPD btnLarge animated">
+              </div>
+            </div>
+          </div>
+        
+    </script>
+
 <script type="text/template" id="searchTemplate">
 
 
@@ -61,24 +102,23 @@
             var options={
                 sections:[
                         {
-                            id: "section1",
                             class: "top",
                             children:[
                                 {
-                                    id: "s1-1",
-                                    class: "",
+                                    //class: "",
                                     render: function(element){
+                                        console.log('table title el:',element);
                                         $(element).html('<span><h2>Table Title</h2><span>');
                                     }
                                 },
                                 {
-                                    id: "s1-2",
                                     class: "search",
                                     render: function(element,messageBus){
                                         $(element).html($('#searchTemplate').html());
                                         $('input[name="Search"]').on('click',function(){
                                             var searchBy= $('#searchEmployee').val();
                                             var searchTerm=$('#searchEmployeeBox').val();
+                                            console.log('search');
                                             messageBus.publish('onSearch',{searchBy: searchBy,searchTerm: searchTerm});
                                         });
                                     }
@@ -86,14 +126,12 @@
                             ]
                         },
                         {
-                            id: "section2",
                             class: "tableContainer",
                             children:[
                                 {
                                     type: 'table'
                                 },
                                 {
-                                    id: "s2-2",
                                     class: "recordNotFound",
                                     render: function(element,messageBus){
                                         $(element).html('<p>No Records found</p>');
@@ -111,23 +149,15 @@
                             ]
                         },
                         {
-                            id: "section3",
                             class: "bottom",
                             children:[
                                 {
                                     type: 'pagination-select',
-                                    id: "s3-1",
                                     class: "pagination"
                                 }
                             ]
                         }
                 ],
-                search:{
-                    action: function(column){
-                       column(1).search('1').draw();
-                    }
-                },
-               
                 ajax: {
                     url: 'https://jsonplaceholder.typicode.com/comments',
                     dataSrc: ''
@@ -151,6 +181,90 @@
                 
            };
            $('#example').CcDataTable(options);
+
+
+           var options2={
+                sections:[
+                        {
+                            class: "top",
+                            children:[
+                                {
+                                    //class: "",
+                                    render: function(element){
+                                        console.log('table title el:',element);
+                                        $(element).html('<span><h2>Table Title</h2><span>');
+                                    }
+                                },
+                                {
+                                    class: "search",
+                                    render: function(element,messageBus){
+                                        $(element).html($('#searchTemplate2').html());
+                                        $('#s2 input[name="Search"]').on('click',function(){
+                                            var searchBy= $('#s2 #searchEmployee').val();
+                                            var searchTerm=$('#s2 #searchEmployeeBox').val();
+                                            console.log('s2');
+                                            messageBus.publish('onSearch',{searchBy: searchBy,searchTerm: searchTerm});
+                                        });
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            class: "tableContainer",
+                            children:[
+                                {
+                                    type: 'table'
+                                },
+                                {
+                                    class: "recordNotFound",
+                                    render: function(element,messageBus){
+                                        $(element).html('<p>No Records found</p>');
+
+                                       messageBus.subscribe('onTotalPageChanged',function(e,totalPage){
+                                           console.log('onTotalPageChanged',e,totalPage<1);
+                                            if(totalPage<1){
+                                                $(element).show();
+                                            }else{
+                                                $(element).hide();
+                                            }
+                                       });
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            class: "bottom",
+                            children:[
+                                {
+                                    type: 'pagination-select',
+                                    class: "pagination"
+                                }
+                            ]
+                        }
+                ],
+                ajax: {
+                    url: 'https://jsonplaceholder.typicode.com/comments',
+                    dataSrc: ''
+                },
+                columns: [ 
+                    {
+                        "orderable": false,
+                        "render": function (data, type, full, meta) {
+                            return '<input type="checkbox" name="chk'+full.id+'" class="chk"/>';
+                        }
+                    },
+                    {"data": "id"},
+                    { "data": "name" },
+                    {"data": "email"},
+                    {
+                        "render": function (data, type, full, meta) {
+                            return '<a class="btn btn-warning">View/Edit</a>';
+                        }
+                    }
+                ],
+                
+           };
+           $('#example2').CcDataTable(options2);
 
         });
        
