@@ -34,7 +34,7 @@
 		
 
 		// The actual plugin constructor
-		function Plugin ( element, options ) {
+		function Plugin ( element, options, pluginIntanceName ) {
 			var me= this;
 			this.element = element;
 			var defaults = {};
@@ -44,10 +44,11 @@
 				prePageControlId:'prePage',
 				nextPageControlId: 'nextPage',
 				selectedPageControlId: 'selectedPage',
-				totalRecordsControlId: 'totalRecords'
+				totalRecordsControlId: 'totalRecords',
+				containerId: 'paginationContainer'
 			 };
 			this.paginationTemplate='<div class="totalRecords" id="{{totalRecordsControlId}}">Total Records : 0</div> \
-        <div class="paginationTools"> \
+        <div class="paginationTools" id="{{containerId}}"> \
           <button class="fa fa-fast-backward paginationIcon paginationDisabled" id="{{firstPageControlId}}"></button> \
 		  <button class="fa fa-step-backward paginationIcon paginationDisabled" id="{{prePageControlId}}"></button> \
           <select id="{{selectedPageControlId}}"></select> \
@@ -61,7 +62,7 @@
 			// future instances of the plugin
 			this.settings = $.extend( {}, defaults, options );
 			this._defaults = defaults;
-			this._name = pluginName;
+			this._name = pluginIntanceName;
 
 			//create unique id for each pagination control and apply id to the template
 			this.settings.paginationControls=$.extend({},paginationControls);
@@ -73,7 +74,7 @@
 				var idWithSyntax= id.charAt(0)==='#' ? id : '#'+id;
 				me.settings.paginationControls[k]=idWithSyntax;
 			});
-			console.log(this.element.id+' paginationTemplate: ',me.paginationTemplate);
+			console.log(this._name+' paginationTemplate: ',me.paginationTemplate);
 			console.log('after changed:',me.settings.paginationControls);
 
 			//create dom
@@ -172,6 +173,7 @@
 				var preId=  this.settings.paginationControls.prePageControlId;
 				var lastId=  this.settings.paginationControls.lastPageControlId;
 				var nextId=  this.settings.paginationControls.nextPageControlId;
+				var containerId= this.settings.paginationControls.containerId;
 				var info = me.table.page.info();
 				console.log('page info: ', info);
 				//set current page on the dropdown list
@@ -201,19 +203,26 @@
 					$(lastId).attr('disabled',true);
 					$(nextId).attr('disabled',true);
 				}
+
+				var $paginationControlContainer=$('.'+me._domRootClassName).find(containerId);
+				if(info.pages<1){
+					//hide the pagination control if total page is less than 0
+					$paginationControlContainer.hide();
+				}else{
+					$paginationControlContainer.show();
+				}
 					
 			},
 			setupCustomMessageHandler: function(){
 				var me= this;
 
 				me._messageBus.subscribe('onSearch',function(){
-					console.log(me.element.id+'=>on search', arguments);
+					console.log(me._name+'=>on search', arguments);
 					var searchBy= arguments[1].searchBy || "";
 					var searchTerm= arguments[1].searchTerm || "";
 					me.table.columns(searchBy).search(searchTerm).draw();
 
-					//recreate dropdown list
-					me.createPagingDropdown();
+				
 				});
 				
 				me._messageBus.subscribe('onTotalRecordsChanged',function(){
@@ -228,6 +237,11 @@
 				var totalPages= me.getTotalPages();
 
 				me.table.on('draw.dt', function () {
+					console.log('on page redraw');
+
+					//recreate dropdown list
+					me.createPagingDropdown();
+
 					me._messageBus.publish('onTotalRecordsChanged',me.table.page.info().recordsDisplay);
 					me._messageBus.publish('onTotalPageChanged',me.getTotalPages());
 					me.enableOrDisablePaginationControls();
@@ -285,13 +299,18 @@
 				//create dropdown list
 				var selectedPageId=  this.settings.paginationControls.selectedPageControlId;
 				var $select= $(selectedPageId);
+				var totalOptions= $select.find('option').length;
+				
 				var totalPages= this.getTotalPages();
-				$select.empty();
-				for(var i=0; i<totalPages; i++){
-					var optElement= document.createElement('option');
-					optElement.value=i;
-					optElement.text=i+1;
-					$select.append(optElement);
+				if(totalOptions!=totalPages){
+					console.log('creating dropdown options:',totalPages);
+					$select.empty();
+					for(var i=0; i<totalPages; i++){
+						var optElement= document.createElement('option');
+						optElement.value=i;
+						optElement.text=i+1;
+						$select.append(optElement);
+					}
 				}
 			},
 			renderElements: function() {
@@ -344,7 +363,7 @@
 				if ( !$.data( this, "plugin_" + instanceName ) ) {
 					console.log('creating plugin instance: ',instanceName);
 					$.data( this, "plugin_" +
-						instanceName, new Plugin( this, options ) );
+						instanceName, new Plugin( this, options, instanceName) );
 				}
 			} );
 		};
