@@ -12,22 +12,10 @@
 		// minified (especially when both are regularly referenced in your plugin).
 
 		// Create the defaults once
-		var pCtrlContainerId='#PaginationControlsContainer';
 
 		
-		var paginationControls={
-			firstPageControlId: 'first',
-			lastPageControlId: 'last',
-			prePageControlId:'prePage',
-			nextPageControlId: 'nextPage',
-			selectedPageControlId: 'selectedPage',
-			totalRecordsControlId: 'totalRecords'
-	 };
-		var pluginName = "CcDataTable",
-			defaults = {
-				//"dom": '<"#cc_topDiv.row"<"half"<"itemHeader">><"half"f>>r<"formTemplate1"<"panelMainTemplate"t>><"noRecordFound"><"#cc_bottomDiv"<"'+pCtrlContainerId+'">i>',
-				pagCtrlContainerId: pCtrlContainerId
-			};
+		
+		var pluginName = "CcDataTable";
 		
 		function GetMessageBus(){
 			var bus={};
@@ -49,7 +37,15 @@
 		function Plugin ( element, options ) {
 			var me= this;
 			this.element = element;
-	
+			var defaults = {};
+			var paginationControls={
+				firstPageControlId: 'first',
+				lastPageControlId: 'last',
+				prePageControlId:'prePage',
+				nextPageControlId: 'nextPage',
+				selectedPageControlId: 'selectedPage',
+				totalRecordsControlId: 'totalRecords'
+			 };
 			this.paginationTemplate='<div class="totalRecords" id="{{totalRecordsControlId}}">Total Records : 0</div> \
         <div class="paginationTools"> \
           <button class="fa fa-fast-backward paginationIcon paginationDisabled" id="{{firstPageControlId}}"></button> \
@@ -58,7 +54,7 @@
           <button class="fa fa-step-forward paginationIcon" id="{{nextPageControlId}}"></button> \
           <button class="fa fa-fast-forward paginationIcon" id="{{lastPageControlId}}"></button> \
 		</div>';
-
+		   
 			// jQuery has an extend method which merges the contents of two or
 			// more objects, storing the result in the first object. The first object
 			// is generally empty as we don't want to alter the default options for
@@ -68,19 +64,18 @@
 			this._name = pluginName;
 
 			//create unique id for each pagination control and apply id to the template
-			$.map(paginationControls,function(v,k){
-				v=me.getUniqueId(v);
-				me.paginationTemplate = me.replaceKeyWithValue(me.paginationTemplate,k,v);
+			this.settings.paginationControls=$.extend({},paginationControls);
+			console.log('before changed:',this.settings.paginationControls);
+	
+			$.each(paginationControls,function(k,v){
+				var id=me.getUniqueId(v);
+				me.paginationTemplate = me.replaceKeyWithValue(me.paginationTemplate,k,id);
+				var idWithSyntax= id.charAt(0)==='#' ? id : '#'+id;
+				me.settings.paginationControls[k]=idWithSyntax;
 			});
 			console.log(this.element.id+' paginationTemplate: ',me.paginationTemplate);
+			console.log('after changed:',me.settings.paginationControls);
 
-			this.settings.paginationControls=paginationControls;
-
-			var pControls=this.settings.paginationControls;
-			$.each(pControls,function(k,v){
-				pControls[k]= v.charAt(0)==='#' ? v : '#'+v;
-			});
-			
 			//create dom
 			me._defaults.dom="";
 			me._domRootClassName='wrapper_'+me.getUniqueId('dt');
@@ -109,7 +104,7 @@
 				// you can add more functions like the one below and
 				// call them like the example below
 				this.setupCustomMessageHandler();
-				this.initPaginationControls();
+				this.renderElements();
 				this.setupEventsListener();
 				
 			},
@@ -216,6 +211,9 @@
 					var searchBy= arguments[1].searchBy || "";
 					var searchTerm= arguments[1].searchTerm || "";
 					me.table.columns(searchBy).search(searchTerm).draw();
+
+					//recreate dropdown list
+					me.createPagingDropdown();
 				});
 				
 				me._messageBus.subscribe('onTotalRecordsChanged',function(){
@@ -232,12 +230,12 @@
 				me.table.on('draw.dt', function () {
 					me._messageBus.publish('onTotalRecordsChanged',me.table.page.info().recordsDisplay);
 					me._messageBus.publish('onTotalPageChanged',me.getTotalPages());
-					//$(document).trigger("onTotalPageChanged",totalPages);
+					me.enableOrDisablePaginationControls();
 				});
 				//on page(records per page) length changed event
 				me.table.on( 'length.dt', function ( e, settings, len ) {
 					console.log( 'New page length: '+len );
-					me.initPaginationControls();
+					me.renderElements();
 				} );
 				
 				//on page switching event
@@ -283,7 +281,20 @@
 				var me= this;
 				return document.querySelector('.'+me._domRootClassName+ ' .'+key);
 			},
-			initPaginationControls: function() {
+			createPagingDropdown: function(){
+				//create dropdown list
+				var selectedPageId=  this.settings.paginationControls.selectedPageControlId;
+				var $select= $(selectedPageId);
+				var totalPages= this.getTotalPages();
+				$select.empty();
+				for(var i=0; i<totalPages; i++){
+					var optElement= document.createElement('option');
+					optElement.value=i;
+					optElement.text=i+1;
+					$select.append(optElement);
+				}
+			},
+			renderElements: function() {
 				var me =this;
 				var totalPages= me.getTotalPages();
 			
@@ -313,18 +324,7 @@
 					}
 				});
 
-				//set up pagination controls
-					//create dropdown list
-					var selectedPageId=  this.settings.paginationControls.selectedPageControlId;
-					var $select= $(selectedPageId);
-
-					$select.empty();
-					for(var i=0; i<totalPages; i++){
-						var optElement= document.createElement('option');
-						optElement.value=i;
-						optElement.text=i+1;
-						$select.append(optElement);
-					}
+					me.createPagingDropdown();
 
 					me._messageBus.publish('onTotalRecordsChanged',this.table.page.info().recordsTotal);
 					me._messageBus.publish('onTotalPageChanged',me.getTotalPages());
