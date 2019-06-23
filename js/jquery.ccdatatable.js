@@ -1,20 +1,6 @@
 ;( function( $, window, document, undefined ) {
 
 	"use strict";
-
-		// undefined is used here as the undefined global variable in ECMAScript 3 is
-		// mutable (ie. it can be changed by someone else). undefined isn't really being
-		// passed in so we can ensure the value of it is truly undefined. In ES5, undefined
-		// can no longer be modified.
-
-		// window and document are passed through as local variables rather than global
-		// as this (slightly) quickens the resolution process and can be more efficiently
-		// minified (especially when both are regularly referenced in your plugin).
-
-		// Create the defaults once
-
-		
-		
 		var pluginName = "CcDataTable";
 		
 		function GetMessageBus(){
@@ -37,7 +23,11 @@
 		function Plugin ( element, options, pluginIntanceName ) {
 			var me= this;
 			this.element = element;
-			var defaults = {};
+			this._name = pluginIntanceName;
+
+			var defaults = {
+				pageLength: 25
+			};
 			var paginationControls={
 				firstPageControlId: 'first',
 				lastPageControlId: 'last',
@@ -55,19 +45,13 @@
           <button class="fa fa-step-forward paginationIcon" id="{{nextPageControlId}}"></button> \
           <button class="fa fa-fast-forward paginationIcon" id="{{lastPageControlId}}"></button> \
 		</div>';
-		   
-			// jQuery has an extend method which merges the contents of two or
-			// more objects, storing the result in the first object. The first object
-			// is generally empty as we don't want to alter the default options for
-			// future instances of the plugin
+
 			this.settings = $.extend( {}, defaults, options );
 			this._defaults = defaults;
-			this._name = pluginIntanceName;
+		
 
 			//create unique id for each pagination control and apply id to the template
 			this.settings.paginationControls=$.extend({},paginationControls);
-			console.log('before changed:',this.settings.paginationControls);
-	
 			$.each(paginationControls,function(k,v){
 				var id=me.getUniqueId(v);
 				me.paginationTemplate = me.replaceKeyWithValue(me.paginationTemplate,k,id);
@@ -75,39 +59,29 @@
 				me.settings.paginationControls[k]=idWithSyntax;
 			});
 			console.log(this._name+' paginationTemplate: ',me.paginationTemplate);
-			console.log('after changed:',me.settings.paginationControls);
 
 			//create dom
 			me._defaults.dom="";
 			me._domRootClassName='wrapper_'+me.getUniqueId('dt');
+
 			this.settings.dom=me.getCustomDom();
+			this._messageBus= GetMessageBus();
 
-			console.log('settings: ',this.settings);
-
-			
+			//create datatable instance, then init this plugin
 			this.table= $(this.element).on( 'init.dt', function (){
 				me.init();
 			}).DataTable(this.settings);
-
-			this._messageBus= GetMessageBus();
-	
-			
 		}
 
 		// Avoid Plugin.prototype conflicts
 		$.extend( Plugin.prototype, {
 			init: function() {
-
-				// Place initialization logic here
-				// You already have access to the DOM element and
-				// the options via the instance, e.g. this.element
-				// and this.settings
-				// you can add more functions like the one below and
-				// call them like the example below
 				this.setupCustomMessageHandler();
 				this.renderElements();
 				this.setupEventsListener();
-				
+			},
+			findElement: function(key){
+				return $('.'+this._domRootClassName).find(key);
 			},
 			replaceKeyWithValue: function(inputStringTemplate,key,value){
 				var regex = new RegExp("{{"+key+"}}", "gi");
@@ -124,12 +98,9 @@
 				$.map(me.settings.sections,function(v,k){
 					console.log(v,k);
 					var isTable= v.type ? v.type.toLowerCase()==='table' : false;
-					
-					//var id= v.id ? '#'+v.id : '#'+me.getUniqueId(k);
 					var className=(v.class && v.class.trim().length>0) ? v.class : me.getUniqueId(k);
 					v.class=className;
 					
-				
 					if(isTable){
 						domArray.push("t");
 						endTag="";
@@ -141,7 +112,6 @@
 	
 					$.map(v.children,function(cv,ck){
 						var isTable1= cv.type ? cv.type.toLowerCase()==='table' : false;
-						//var cid= v.id ? '#'+cv.id : '#'+me.getUniqueId(ck);
 						var cclassName= (cv.class && cv.class.trim().length>0) ? cv.class : me.getUniqueId(k);
 						cv.class=cclassName;
 
@@ -153,10 +123,9 @@
 					});
 	
 					domArray.push(endTag);
-					
-					
 				});
-				//endding tag for the container
+
+				//ending tag for the container
 				domArray.push(endTag);
 
 				return domArray.join('');
@@ -175,9 +144,10 @@
 				var nextId=  this.settings.paginationControls.nextPageControlId;
 				var containerId= this.settings.paginationControls.containerId;
 				var info = me.table.page.info();
-				console.log('page info: ', info);
+
+				console.log('enableOrDisablePaginationControls ==>page info: ', info);
 				//set current page on the dropdown list
-				$(selectId).val(info.page);
+				me.findElement(selectId).val(info.page);
 
 				var currentPage= info.page +1;
 
@@ -185,26 +155,26 @@
 				var hasPrePage= (currentPage-1) >0;
 				if(hasPrePage){
 					//enable prev and first
-					$(firstId).attr('disabled',false);
-					$(preId).attr('disabled',false);
+					me.findElement(firstId).attr('disabled',false);
+					me.findElement(preId).attr('disabled',false);
 				}else{
 					//disable
-					$(firstId).attr('disabled',true);
-					$(preId).attr('disabled',true);
+					me.findElement(firstId).attr('disabled',true);
+					me.findElement(preId).attr('disabled',true);
 				}
 
 				var hasNextPage= (info.pages -currentPage) >0;
 				if(hasNextPage){
 					//enable next and last
-					$(lastId).attr('disabled',false);
-					$(nextId).attr('disabled',false);
+					me.findElement(lastId).attr('disabled',false);
+					me.findElement(nextId).attr('disabled',false);
 				}else{
 					//disable
-					$(lastId).attr('disabled',true);
-					$(nextId).attr('disabled',true);
+					me.findElement(lastId).attr('disabled',true);
+					me.findElement(nextId).attr('disabled',true);
 				}
 
-				var $paginationControlContainer=$('.'+me._domRootClassName).find(containerId);
+				var $paginationControlContainer=me.findElement(containerId);
 				if(info.pages<1){
 					//hide the pagination control if total page is less than 0
 					$paginationControlContainer.hide();
@@ -221,14 +191,12 @@
 					var searchBy= arguments[1].searchBy || "";
 					var searchTerm= arguments[1].searchTerm || "";
 					me.table.columns(searchBy).search(searchTerm).draw();
-
-				
 				});
 				
 				me._messageBus.subscribe('onTotalRecordsChanged',function(){
 					var totalRecords= arguments[1] || 0;
 					console.log('onTotalRecordsChanged',totalRecords);
-					$(me.settings.paginationControls.totalRecordsControlId).html("Total Records : "+ totalRecords);
+					me.findElement(me.settings.paginationControls.totalRecordsControlId).html("Total Records : "+ totalRecords);
 				});
 			},
 			setupEventsListener: function(){
@@ -246,6 +214,7 @@
 					me._messageBus.publish('onTotalPageChanged',me.getTotalPages());
 					me.enableOrDisablePaginationControls();
 				});
+
 				//on page(records per page) length changed event
 				me.table.on( 'length.dt', function ( e, settings, len ) {
 					console.log( 'New page length: '+len );
@@ -258,27 +227,28 @@
 				} );
 
 				var firstId=  this.settings.paginationControls.firstPageControlId;
-				$(firstId).on( 'click', function () {
+				me.findElement(firstId).on( 'click', function () {
 					me.table.page('first').draw('page');
 				});
 
 				var lastId=  this.settings.paginationControls.lastPageControlId;
-				$(lastId).on( 'click', function () {
+				me.findElement(lastId).on( 'click', function () {
 					me.table.page('last').draw('page');
 				});
 
 				var preId=  this.settings.paginationControls.prePageControlId;
-				$(preId).on( 'click', function () {
+				me.findElement(preId).on( 'click', function () {
 					me.table.page('previous').draw('page');
 				});
 
 				var nextId=  this.settings.paginationControls.nextPageControlId;
-				$(nextId).on( 'click', function () {
+				me.findElement(nextId).on( 'click', function () {
 					me.table.page('next').draw('page');
 				});
 
+				//dropdown
 				var selectedPageId=  this.settings.paginationControls.selectedPageControlId;
-				var $select= $(selectedPageId);
+				var $select= me.findElement(selectedPageId);
 				$select.on('change', function () {
 					var goToPage=  Math.floor($(this).val());
 				
@@ -296,12 +266,13 @@
 				return document.querySelector('.'+me._domRootClassName+ ' .'+key);
 			},
 			createPagingDropdown: function(){
+				var me=this;
 				//create dropdown list
 				var selectedPageId=  this.settings.paginationControls.selectedPageControlId;
-				var $select= $(selectedPageId);
+				var $select= me.findElement(selectedPageId);
 				var totalOptions= $select.find('option').length;
-				
 				var totalPages= this.getTotalPages();
+
 				if(totalOptions!=totalPages){
 					console.log('creating dropdown options:',totalPages);
 					$select.empty();
@@ -316,12 +287,11 @@
 			renderElements: function() {
 				var me =this;
 				var totalPages= me.getTotalPages();
-			
-				
+				console.log('total records: ',this.table.page.info().recordsTotal);
+
 				me.enableOrDisablePaginationControls();
 
 				//after datatable init, render elements for each section
-
 				var children= $.map(me.settings.sections,function(v,k){
 					if(v.children && v.children.length>0){
 						return v.children;
@@ -332,23 +302,29 @@
 				$.map(children,function(v,k){
 					var isTable= v.type ? v.type.toLowerCase()==='table' : false;
 					if(!isTable){
-						if(v.render)
-						v.render.call(this,me.getElementWithinRootContainerByClass(v.class),me._messageBus);
+						var ele=me.getElementWithinRootContainerByClass(v.class);
+						var data=me.table.data();
+						if(v.render){
+							var content=v.render.call(null,ele,me._messageBus,data);
+							me.findElement('.'+v.class).html(content);
+						}
+						if(v.action){
+							v.action.call(null,ele,me._messageBus);
+						}
+
 					}
 					
 					var type=v.type || '';
 					if(type.toLowerCase()==='pagination-select'){
-						var el=me.getElementWithinRootContainerByClass(v.class);
-						$(el).html(me.paginationTemplate);
+						//var el=me.getElementWithinRootContainerByClass(v.class);
+						me.findElement('.'+v.class).html(me.paginationTemplate);
 					}
 				});
 
-					me.createPagingDropdown();
+				me.createPagingDropdown();
 
-					me._messageBus.publish('onTotalRecordsChanged',this.table.page.info().recordsTotal);
-					me._messageBus.publish('onTotalPageChanged',me.getTotalPages());
-					console.log(this.table.page.info().recordsTotal);
-				
+				me._messageBus.publish('onTotalRecordsChanged',this.table.page.info().recordsTotal);
+				me._messageBus.publish('onTotalPageChanged',me.getTotalPages());	
 			},
 
 		} );
