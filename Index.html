@@ -174,9 +174,12 @@
                                   
                                     return "<p>Other tools place here</p>";
                                 },
-                                action: function(element,messageBus){
-                                    var getSelectedItems= $('input[type="checkbox"]:checked');
-                                    //do something
+                                action: function(element,messageBus,settings){
+                                    $(settings.rootElement).find('.others').on('click',function(){
+                                        var getSelectedItems=   $(settings.rootElement).find('input[type="checkbox"]:checked');
+                                        console.log('selcted item:',getSelectedItems);
+                                    });
+                                   
                                 }
                             }
                         ]

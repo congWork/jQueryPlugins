@@ -304,12 +304,15 @@
 					if(!isTable){
 						var ele=me.getElementWithinRootContainerByClass(v.class);
 						var data=me.table.data();
+						var settingInfo={
+							rootElement: document.querySelector('.'+me._domRootClassName)
+						};
 						if(v.render){
-							var content=v.render.call(null,ele,me._messageBus,data);
+							var content=v.render.call(null,ele,me._messageBus,data, settingInfo);
 							me.findElement('.'+v.class).html(content);
 						}
 						if(v.action){
-							v.action.call(null,ele,me._messageBus);
+							v.action.call(null,ele,me._messageBus, settingInfo);
 						}
 
 					}
