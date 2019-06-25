@@ -1,0 +1,302 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
+
+</head>
+
+<body>
+    <table id="example" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th class="noSort" width="39" align="left"><label class="hidden" aria-label="false" for="appraisalSelectAll">Check to select all table rows</label>
+                    <input type="checkbox" class="actionStopPropagation" id="appraisalSelectAll"></th>
+                <th>Id</th>
+                <th>ccEmail</th>
+                <th>Name</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+      
+    </table>
+
+    <table id="example2" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th><input type="checkbox" name="chkAll"/></th>
+                <th>Id</th>
+                <th>ccEmail</th>
+                <th>Name</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+      
+    </table>
+
+    <script type="text/template" id="searchTemplate2">
+
+
+        <div class="rowTableSearch container" id="s2">
+            <div class="row">
+              <div class="searchField">
+                <label for="searchEmployee">Search</label>
+                <select id="searchEmployee">
+                  <option selected value='1'>Date</option>
+                  <option value='2'>Template Name</option>
+                  <option value='3'>Business Title</option>
+                  <option value='4'>Work Unit</option>
+                  <option value='5'>Etc</option>
+                </select>
+              </div>
+              <div id="searchFieldText" class="validationError">
+                <input type="text" id="searchEmployeeBox" title="Employee Search Box" aria-required="true">
+                  <span class="errorInlineMessage">Required</span>
+                </div>
+              <div class="fifth">
+                <input name="Search" type="button" value="Search" class="btnHPD btnLarge animated">
+              </div>
+            </div>
+          </div>
+        
+    </script>
+
+<script type="text/template" id="searchTemplate">
+
+
+    <div class="rowTableSearch container" id="s1">
+        <div class="row">
+          <div class="searchField">
+            <label for="searchEmployee">Search</label>
+            <select id="searchEmployee1">
+              <option selected value='1'>Date</option>
+              <option value='2'>Template Name</option>
+              <option value='3'>Business Title</option>
+              <option value='4'>Work Unit</option>
+              <option value='5'>Etc</option>
+            </select>
+          </div>
+          <div id="searchFieldText" class="validationError">
+            <input type="text" id="searchEmployeeBox1" title="Employee Search Box" aria-required="true">
+              <span class="errorInlineMessage">Required</span>
+            </div>
+          <div class="fifth">
+            <input name="Search" type="button" value="Search" class="btnHPD btnLarge animated">
+          </div>
+        </div>
+      </div>
+    
+</script>
+  
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="js/jquery.ccdatatable.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            //build in types
+            /*
+                'pagination-select' is a pagination dropdown control/element
+                'table' is for a table control/element
+            */
+            var options={
+                pageLength: 10,
+                sections:[
+                    {
+                        class: "top",
+                        children:[
+                            {
+                                class: "",
+                                render: function(element,messageBus,data){
+                                    return '<span><h2>Table Title</h2><span>';
+                                }
+                            },
+                            {
+                                class: "search",
+                                render: function(element,messageBus,data){
+                                
+                                    return $('#searchTemplate').html();
+                                },
+                                action: function(element,messageBus){
+    
+                                    $('#s1 input[name="Search"]').on('click',function(){
+                                            var searchBy= $('#s1 #searchEmployee1').val();
+                                            var searchTerm=$('#s1 #searchEmployeeBox1').val();
+                                            console.log('s1');
+                                            messageBus.publish('onSearch',{searchBy: searchBy,searchTerm: searchTerm});
+                                        });
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        class: "tableContainer",
+                        children:[
+                            {
+                                type: 'table'
+                            },
+                            {
+                                class: "recordNotFound",
+                                render: function(element,messageBus,data){
+                                    return '<p>No Records found</p>';
+                                },
+                                action: function(element,messageBus){
+                                    messageBus.subscribe('onTotalPageChanged',function(e,totalPage){
+                                        console.log('s onTotalPageChanged',e,totalPage<1);
+                                        if(totalPage<1){
+                                            $(element).show();
+                                        }else{
+                                            $(element).hide();
+                                        }
+                                    });
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        class: "bottom",
+                        children:[
+                            {
+                                type: 'pagination-select',
+                                class: "pagination"
+                            },
+                            {
+                                class: 'others',
+                                render: function(element, messageBus,data){
+                                  
+                                    return "<p>Other tools place here</p>";
+                                },
+                                action: function(element,messageBus,settings){
+                                    $(settings.rootElement).find('.others').on('click',function(){
+                                        var getSelectedItems=   $(settings.rootElement).find('input[type="checkbox"]:checked');
+                                        console.log('selcted item:',getSelectedItems);
+                                    });
+                                   
+                                }
+                            }
+                        ]
+                    }
+                ],
+                ajax: {
+                    url: 'https://jsonplaceholder.typicode.com/comments',
+                    dataSrc: ''
+                },
+                columns: [ 
+                    {
+                        "orderable": false,
+                        "render": function (data, type, full, meta) {
+                            return '<input type="checkbox" name="chk'+full.id+'" class="chk"/>';
+                        }
+                    },
+                    {"data": "id"},
+                    { "data": "name" },
+                    {"data": "email"},
+                    {
+                        "render": function (data, type, full, meta) {
+                            return '<a class="btn btn-warning" href="javascript:alert('+full.id+')">View/Edit</a>';
+                        }
+                    }
+                ],
+
+           };
+           $('#example').CcDataTable(options);
+
+
+           var options2={
+                sections:[
+                        {
+                            class: "top",
+                            children:[
+                                {
+                                    class: "",
+                                    render: function(element,messageBus){
+                                        console.log('table title el:',element);
+                                        $(element).html('<span><h2>Table Title</h2><span>');
+                                    }
+                                },
+                                {
+                                    class: "search",
+                                    render: function(element,messageBus){
+                                        $(element).html($('#searchTemplate2').html());
+                                        $('#s2 input[name="Search"]').on('click',function(){
+                                            var searchBy= $('#s2 #searchEmployee').val();
+                                            var searchTerm=$('#s2 #searchEmployeeBox').val();
+                                            console.log('s2');
+                                            messageBus.publish('onSearch',{searchBy: searchBy,searchTerm: searchTerm});
+                                        });
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            class: "tableContainer",
+                            children:[
+                                {
+                                    type: 'table'
+                                },
+                                {
+                                    class: "recordNotFound",
+                                    render: function(element,messageBus){
+                                        $(element).html('<p>No Records found</p>');
+
+                                       messageBus.subscribe('onTotalPageChanged',function(e,totalPage){
+                                           console.log('onTotalPageChanged',e,totalPage<1);
+                                            if(totalPage<1){
+                                                $(element).show();
+                                            }else{
+                                                $(element).hide();
+                                            }
+                                       });
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            class: "bottom",
+                            children:[
+                                {
+                                    type: 'pagination-select',
+                                    class: "pagination"
+                                }
+                            ]
+                        }
+                ],
+                ajax: {
+                    url: 'https://jsonplaceholder.typicode.com/comments',
+                    dataSrc: ''
+                },
+                columns: [ 
+                    {
+                        "orderable": false,
+                        "render": function (data, type, full, meta) {
+                            return '<input type="checkbox" name="chk'+full.id+'" class="chk"/>';
+                        }
+                    },
+                    {"data": "id"},
+                    { "data": "name" },
+                    {"data": "email"},
+                    {
+                        "render": function (data, type, full, meta) {
+                            return '<a class="btn btn-warning">View/Edit</a>';
+                        }
+                    }
+                ],
+                
+           };
+         //  $('#example2').CcDataTable(options2);
+
+        });
+       
+    </script>
+</body>
+
+</html>

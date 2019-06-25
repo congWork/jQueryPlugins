@@ -15,10 +15,14 @@
 </head>
 
 <body>
+    <div class="top">
+
+    </div>
     <table id="example" class="display" style="width:100%">
         <thead>
             <tr>
-                <th><input type="checkbox" name="chkAll"/></th>
+                <th class="noSort" width="39" align="left"><label class="hidden" aria-label="false" for="appraisalSelectAll">Check to select all table rows</label>
+                    <input type="checkbox" class="actionStopPropagation" id="appraisalSelectAll"></th>
                 <th>Id</th>
                 <th>ccEmail</th>
                 <th>Name</th>
@@ -40,7 +44,9 @@
         </thead>
       
     </table>
+    <div class="bottom">
 
+        </div>
     <script type="text/template" id="searchTemplate2">
 
 
@@ -111,78 +117,24 @@
                 pageLength: 10,
                 sections:[
                     {
-                        class: "top",
-                        children:[
-                            {
-                                class: "",
-                                render: function(element,messageBus,data){
-                                    return '<span><h2>Table Title</h2><span>';
-                                }
-                            },
-                            {
-                                class: "search",
-                                render: function(element,messageBus,data){
-                                
-                                    return $('#searchTemplate').html();
-                                },
-                                action: function(element,messageBus){
-    
-                                    $('#s1 input[name="Search"]').on('click',function(){
-                                            var searchBy= $('#s1 #searchEmployee1').val();
-                                            var searchTerm=$('#s1 #searchEmployeeBox1').val();
-                                            console.log('s1');
-                                            messageBus.publish('onSearch',{searchBy: searchBy,searchTerm: searchTerm});
-                                        });
-                                }
-                            }
-                        ]
+                        appendTo: '.top',
+                        type: 'pagination-select'
                     },
                     {
-                        class: "tableContainer",
-                        children:[
-                            {
-                                type: 'table'
-                            },
-                            {
-                                class: "recordNotFound",
-                                render: function(element,messageBus,data){
-                                    return '<p>No Records found</p>';
-                                },
-                                action: function(element,messageBus){
-                                    messageBus.subscribe('onTotalPageChanged',function(e,totalPage){
-                                        console.log('s onTotalPageChanged',e,totalPage<1);
-                                        if(totalPage<1){
-                                            $(element).show();
-                                        }else{
-                                            $(element).hide();
-                                        }
-                                    });
-                                }
-                            }
-                        ]
+                        appendTo: '.bottom',
+                        type: 'pagination-select'
                     },
                     {
-                        class: "bottom",
-                        children:[
-                            {
-                                type: 'pagination-select',
-                                class: "pagination"
-                            },
-                            {
-                                class: 'others',
-                                render: function(element, messageBus,data){
-                                  
-                                    return "<p>Other tools place here</p>";
-                                },
-                                action: function(element,messageBus,settings){
-                                    $(settings.rootElement).find('.others').on('click',function(){
-                                        var getSelectedItems=   $(settings.rootElement).find('input[type="checkbox"]:checked');
-                                        console.log('selcted item:',getSelectedItems);
-                                    });
-                                   
-                                }
-                            }
-                        ]
+                        appendTo: '.bottom',
+                        render: function(messageBus,data){
+                             return "<p>Other tools place here</p>";
+                        },
+                        action: function($element,messageBus,settings){
+                           $element.on('click',function(){
+                                var getSelectedItems=   $(settings.rootElement).find('input[type="checkbox"]:checked');
+                                console.log('selcted item:',getSelectedItems);
+                            });    
+                        }
                     }
                 ],
                 ajax: {
@@ -208,91 +160,6 @@
 
            };
            $('#example').CcDataTable(options);
-
-
-           var options2={
-                sections:[
-                        {
-                            class: "top",
-                            children:[
-                                {
-                                    class: "",
-                                    render: function(element,messageBus){
-                                        console.log('table title el:',element);
-                                        $(element).html('<span><h2>Table Title</h2><span>');
-                                    }
-                                },
-                                {
-                                    class: "search",
-                                    render: function(element,messageBus){
-                                        $(element).html($('#searchTemplate2').html());
-                                        $('#s2 input[name="Search"]').on('click',function(){
-                                            var searchBy= $('#s2 #searchEmployee').val();
-                                            var searchTerm=$('#s2 #searchEmployeeBox').val();
-                                            console.log('s2');
-                                            messageBus.publish('onSearch',{searchBy: searchBy,searchTerm: searchTerm});
-                                        });
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            class: "tableContainer",
-                            children:[
-                                {
-                                    type: 'table'
-                                },
-                                {
-                                    class: "recordNotFound",
-                                    render: function(element,messageBus){
-                                        $(element).html('<p>No Records found</p>');
-
-                                       messageBus.subscribe('onTotalPageChanged',function(e,totalPage){
-                                           console.log('onTotalPageChanged',e,totalPage<1);
-                                            if(totalPage<1){
-                                                $(element).show();
-                                            }else{
-                                                $(element).hide();
-                                            }
-                                       });
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            class: "bottom",
-                            children:[
-                                {
-                                    type: 'pagination-select',
-                                    class: "pagination"
-                                }
-                            ]
-                        }
-                ],
-                ajax: {
-                    url: 'https://jsonplaceholder.typicode.com/comments',
-                    dataSrc: ''
-                },
-                columns: [ 
-                    {
-                        "orderable": false,
-                        "render": function (data, type, full, meta) {
-                            return '<input type="checkbox" name="chk'+full.id+'" class="chk"/>';
-                        }
-                    },
-                    {"data": "id"},
-                    { "data": "name" },
-                    {"data": "email"},
-                    {
-                        "render": function (data, type, full, meta) {
-                            return '<a class="btn btn-warning">View/Edit</a>';
-                        }
-                    }
-                ],
-                
-           };
-         //  $('#example2').CcDataTable(options2);
-
         });
        
     </script>

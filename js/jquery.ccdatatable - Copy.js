@@ -24,10 +24,6 @@
 			var me= this;
 			this.element = element;
 			this._name = pluginIntanceName;
-			
-			this.config= {
-				paginationSelectContainer: {}
-			};
 
 			var defaults = {
 				pageLength: 25
@@ -41,14 +37,14 @@
 				totalRecordsControlId: 'totalRecords',
 				containerId: 'paginationContainer'
 			 };
-			this.paginationTemplate='<div class="totalRecords"  data-name="{{totalRecordsControlId}}">Total Records : 0</div> \
-		<div class="paginationTools" data-name="{{containerId}}"> \
-		<button class="fa fa-fast-backward paginationIcon paginationDisabled" data-name="{{firstPageControlId}}" type="button" title="Go to first page disabled"><span class="hidden" aria-hidden="false">"Go to first page disabled"</span></button> \
-		<button class="fa fa-step-backward paginationIcon paginationDisabled" data-name="{{prePageControlId}}" type="button" title="Go to previous page disabled"><span class="hidden" aria-hidden="false">"Go to previous page disabled"</span></button> \
+			this.paginationTemplate='<div class="totalRecords" id="{{totalRecordsControlId}}">Total Records : 0</div> \
+		<div class="paginationTools" id="{{containerId}}"> \
+		<button class="fa fa-fast-backward paginationIcon paginationDisabled" id="{{firstPageControlId}}" type="button" title="Go to first page disabled"><span class="hidden" aria-hidden="false">"Go to first page disabled"</span></button> \
+		<button class="fa fa-step-backward paginationIcon paginationDisabled" id="{{prePageControlId}}" type="button" title="Go to previous page disabled"><span class="hidden" aria-hidden="false">"Go to previous page disabled"</span></button> \
 		<label class="hidden" aria-hidden="false" for="paginationNumber2">"Current Page Number"</label> \
-		<select data-name="{{selectedPageControlId}}"></select> \
-		  <button class="fa fa-step-forward paginationIcon" data-name="{{nextPageControlId}}" type="button" title="Go to next page"><span class="hidden" aria-hidden="false">"Go to next page"</span></button> \
-		  <button class="fa fa-fast-forward paginationIcon" data-name="{{lastPageControlId}}" type="button" title="Go to last page"><span class="hidden" aria-hidden="false">"Go to last page"</span></button> \
+		<select id="{{selectedPageControlId}}"></select> \
+		  <button class="fa fa-step-forward paginationIcon" id="{{nextPageControlId}}" type="button" title="Go to next page"><span class="hidden" aria-hidden="false">"Go to next page"</span></button> \
+		  <button class="fa fa-fast-forward paginationIcon" id="{{lastPageControlId}}" type="button" title="Go to last page"><span class="hidden" aria-hidden="false">"Go to last page"</span></button> \
 		</div>';
 
 			this.settings = $.extend( {}, defaults, options );
@@ -60,19 +56,16 @@
 			$.each(paginationControls,function(k,v){
 				var id=me.getUniqueId(v);
 				me.paginationTemplate = me.replaceKeyWithValue(me.paginationTemplate,k,id);
-				var idWithSyntax= '[data-name="'+id+'"]'; //id.charAt(0)==='#' ? id : '#'+id;
+				var idWithSyntax= id.charAt(0)==='#' ? id : '#'+id;
 				me.settings.paginationControls[k]=idWithSyntax;
 			});
 			console.log(this._name+' paginationTemplate: ',me.paginationTemplate);
 
 			//create dom
 			me._defaults.dom="";
-
 			me._domRootClassName='wrapper_'+me.getUniqueId('dt');
-		
-			this.settings.dom=me.getCustomDom();
-			console.log("dom: ",this.settings.dom);
 
+			this.settings.dom=me.getCustomDom();
 			this._messageBus= GetMessageBus();
 
 			//create datatable instance, then init this plugin
@@ -89,7 +82,6 @@
 				this.setupEventsListener();
 			},
 			findElement: function(key){
-				console.log('finding element at root:',this._domRootClassName,key);
 				return $('.'+this._domRootClassName).find(key);
 			},
 			replaceKeyWithValue: function(inputStringTemplate,key,value){
@@ -103,11 +95,36 @@
 				var endTag='>';
 
 				domArray.push(startTag+'"'+me._domRootClassName+'"');
-				
-				var currentDom= me.settings.dom || 't';
-				if(currentDom.length>0){
-					domArray.push(currentDom);
-				}
+
+				$.map(me.settings.sections,function(v,k){
+					console.log(v,k);
+					var isTable= v.type ? v.type.toLowerCase()==='table' : false;
+					var className=(v.class && v.class.trim().length>0) ? v.class : me.getUniqueId(k);
+					v.class=className;
+					
+					if(isTable){
+						domArray.push("t");
+						endTag="";
+					}else{
+						domArray.push(startTag);
+						domArray.push('"');
+						domArray.push(className+'"');
+					}
+	
+					$.map(v.children,function(cv,ck){
+						var isTable1= cv.type ? cv.type.toLowerCase()==='table' : false;
+						var cclassName= (cv.class && cv.class.trim().length>0) ? cv.class : me.getUniqueId(k);
+						cv.class=cclassName;
+
+						if(isTable1){
+							domArray.push("t");
+						}else{
+							domArray.push(startTag+'"'+cclassName+'">');
+						}
+					});
+	
+					domArray.push(endTag);
+				});
 
 				//ending tag for the container
 				domArray.push(endTag);
@@ -131,7 +148,7 @@
 
 				console.log('enableOrDisablePaginationControls ==>page info: ', info);
 				//set current page on the dropdown list
-				$(selectId).val(info.page);
+				me.findElement(selectId).val(info.page);
 
 				var currentPage= info.page +1;
 
@@ -139,26 +156,26 @@
 				var hasPrePage= (currentPage-1) >0;
 				if(hasPrePage){
 					//enable prev and first
-					$(firstId).attr('disabled',false);
-					$(preId).attr('disabled',false);
+					me.findElement(firstId).attr('disabled',false);
+					me.findElement(preId).attr('disabled',false);
 				}else{
 					//disable
-					$(firstId).attr('disabled',true);
-					$(preId).attr('disabled',true);
+					me.findElement(firstId).attr('disabled',true);
+					me.findElement(preId).attr('disabled',true);
 				}
 
 				var hasNextPage= (info.pages -currentPage) >0;
 				if(hasNextPage){
 					//enable next and last
-					$(lastId).attr('disabled',false);
-					$(nextId).attr('disabled',false);
+					me.findElement(lastId).attr('disabled',false);
+					me.findElement(nextId).attr('disabled',false);
 				}else{
 					//disable
-					$(lastId).attr('disabled',true);
-					$(nextId).attr('disabled',true);
+					me.findElement(lastId).attr('disabled',true);
+					me.findElement(nextId).attr('disabled',true);
 				}
 
-				var $paginationControlContainer=$(containerId);
+				var $paginationControlContainer=me.findElement(containerId);
 				if(info.pages<1){
 					//hide the pagination control if total page is less than 0
 					$paginationControlContainer.hide();
@@ -180,7 +197,7 @@
 				me._messageBus.subscribe('onTotalRecordsChanged',function(){
 					var totalRecords= arguments[1] || 0;
 					console.log('onTotalRecordsChanged',totalRecords);
-					$(me.settings.paginationControls.totalRecordsControlId).html("Total Records : "+ totalRecords);
+					me.findElement(me.settings.paginationControls.totalRecordsControlId).html("Total Records : "+ totalRecords);
 				});
 			},
 			setupEventsListener: function(){
@@ -211,30 +228,28 @@
 				} );
 
 				var firstId=  this.settings.paginationControls.firstPageControlId;
-				$(firstId).on( 'click', function () {
+				me.findElement(firstId).on( 'click', function () {
 					me.table.page('first').draw('page');
 				});
 
 				var lastId=  this.settings.paginationControls.lastPageControlId;
-				$(lastId).on( 'click', function () {
+				me.findElement(lastId).on( 'click', function () {
 					me.table.page('last').draw('page');
 				});
 
 				var preId=  this.settings.paginationControls.prePageControlId;
-				$(preId).on( 'click', function () {
+				me.findElement(preId).on( 'click', function () {
 					me.table.page('previous').draw('page');
 				});
 
 				var nextId=  this.settings.paginationControls.nextPageControlId;
-				console.log('next id:',nextId);
-				$(nextId).on( 'click', function () {
-					console.log('cli');
+				me.findElement(nextId).on( 'click', function () {
 					me.table.page('next').draw('page');
 				});
 
 				//dropdown
 				var selectedPageId=  this.settings.paginationControls.selectedPageControlId;
-				var $select= $(selectedPageId);
+				var $select= me.findElement(selectedPageId);
 				$select.on('change', function () {
 					var goToPage=  Math.floor($(this).val());
 				
@@ -255,27 +270,20 @@
 				var me=this;
 				//create dropdown list
 				var selectedPageId=  this.settings.paginationControls.selectedPageControlId;
-				var totalPages= me.getTotalPages();
+				var $select= me.findElement(selectedPageId);
+				var totalOptions= $select.find('option').length;
+				var totalPages= this.getTotalPages();
 
-				console.log('cc:',me.config.paginationSelectContainer);
-				$.each(me.config.paginationSelectContainer,function(k,v){
-				
-					var $select= $(k).find(selectedPageId);
-					var totalOptions= $select.find('option').length;
-				
-	
-					if(totalOptions!=totalPages){
-						console.log('creating dropdown options:',totalPages);
-						$select.empty();
-						for(var i=0; i<totalPages; i++){
-							var optElement= document.createElement('option');
-							optElement.value=i;
-							optElement.text=i+1;
-							$select.append(optElement);
-						}
+				if(totalOptions!=totalPages){
+					console.log('creating dropdown options:',totalPages);
+					$select.empty();
+					for(var i=0; i<totalPages; i++){
+						var optElement= document.createElement('option');
+						optElement.value=i;
+						optElement.text=i+1;
+						$select.append(optElement);
 					}
-				});
-				
+				}
 			},
 			renderElements: function() {
 				var me =this;
@@ -285,34 +293,35 @@
 				me.enableOrDisablePaginationControls();
 
 				//after datatable init, render elements for each section
-				var data=me.table.data();
-				$.each(me.settings.sections,function(k,v){
-					console.log(k,v);
-					var $appendTo= $(v.appendTo);
+				var children= $.map(me.settings.sections,function(v,k){
+					if(v.children && v.children.length>0){
+						return v.children;
+					}
+				});
+				console.log('children: ',children);
+
+				$.map(children,function(v,k){
+					var isTable= v.type ? v.type.toLowerCase()==='table' : false;
+					if(!isTable){
+						var ele=me.getElementWithinRootContainerByClass(v.class);
+						var data=me.table.data();
+						var settingInfo={
+							rootElement: document.querySelector('.'+me._domRootClassName)
+						};
+						if(v.render){
+							var content=v.render.call(null,ele,me._messageBus,data, settingInfo);
+							me.findElement('.'+v.class).html(content);
+						}
+						if(v.action){
+							v.action.call(null,ele,me._messageBus, settingInfo);
+						}
+
+					}
+					
 					var type=v.type || '';
-					var $currentElement=null;
-					var settingInfo={
-						rootElement: document.querySelector('.'+me._domRootClassName)
-					};
-				
-
 					if(type.toLowerCase()==='pagination-select'){
-						me.config.paginationSelectContainer[v.appendTo]=1;
-						$appendTo.each(function(v,i){
-							$(this).append(me.paginationTemplate);
-						});
-
-						return;
-					}
-
-					if(v.render){
-						var content=v.render.call(null,me._messageBus,data, settingInfo);
-						$currentElement=$(content);
-						$currentElement.appendTo($appendTo);
-					}
-
-					if(v.action){
-						v.action.call(null,$currentElement,me._messageBus, settingInfo);
+						//var el=me.getElementWithinRootContainerByClass(v.class);
+						me.findElement('.'+v.class).html(me.paginationTemplate);
 					}
 				});
 
