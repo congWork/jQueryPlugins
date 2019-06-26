@@ -111,7 +111,21 @@
             //build in types
             /*
                 'pagination-select' is a pagination dropdown control/element
-                'table' is for a table control/element
+       
+
+                usage:
+                get datatable instance from $('#example').CcDataTable('tableUniqueName',options).DataTable();
+                example:
+                var datatableInstance= $('#example').CcDataTable('tableUniqueName',options).DataTable();
+
+                custom events:
+                ['onSearch', 'onClear',onTotalRecordsChanged]
+
+                section node:
+                appendTo--> must be a dom element id, this indicate where you want to place your html contents in the render property
+                type--> the type of node, current buildin types are supported: ['pagination-select']
+                render--> a function that returns your html content to be rendered
+                action--> a function that happens after system renders your html content, system is expecting you to put your "to do stuff"
             */
             var options={
                 pageLength: 10,
@@ -159,7 +173,7 @@
                 ],
 
            };
-           $('#example').CcDataTable(options);
+           $('#example').CcDataTable('tableUniqueName',options);
         });
        
     </script>

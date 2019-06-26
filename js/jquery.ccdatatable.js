@@ -44,8 +44,8 @@
 		<div class="paginationTools" data-name="{{containerId}}"> \
 		<button class="fa fa-fast-backward paginationIcon paginationDisabled" data-name="{{firstPageControlId}}" type="button" title="Go to first page disabled"><span class="hidden" aria-hidden="false">"Go to first page disabled"</span></button> \
 		<button class="fa fa-step-backward paginationIcon paginationDisabled" data-name="{{prePageControlId}}" type="button" title="Go to previous page disabled"><span class="hidden" aria-hidden="false">"Go to previous page disabled"</span></button> \
-		<label class="hidden" aria-hidden="false" for="paginationNumber2">"Current Page Number"</label> \
-		<select data-name="{{selectedPageControlId}}"></select> \
+		<label class="hidden" aria-hidden="false" for="{{selectedPageControlId}}">"Current Page Number"</label> \
+		<select data-name="{{selectedPageControlId}}" id="{{selectedPageControlId}}"></select> \
 		  <button class="fa fa-step-forward paginationIcon" data-name="{{nextPageControlId}}" type="button" title="Go to next page"><span class="hidden" aria-hidden="false">"Go to next page"</span></button> \
 		  <button class="fa fa-fast-forward paginationIcon" data-name="{{lastPageControlId}}" type="button" title="Go to last page"><span class="hidden" aria-hidden="false">"Go to last page"</span></button> \
 		</div>';
@@ -85,6 +85,7 @@
 			init: function() {
 				this.setupCustomMessageHandler();
 				this.renderElements();
+				this.enableOrDisablePaginationControls();
 				this.setupEventsListener();
 			},
 			findElement: function(key){
@@ -128,7 +129,7 @@
 				var containerId= this.settings.paginationControls.containerId;
 				var info = me.table.page.info();
 
-				console.log('enableOrDisablePaginationControls ==>page info: ', info);
+				console.log('enableOrDisablePaginationControls');
 				//set current page on the dropdown list
 				$(selectId).val(info.page);
 
@@ -138,23 +139,67 @@
 				var hasPrePage= (currentPage-1) >0;
 				if(hasPrePage){
 					//enable prev and first
-					$(firstId).attr('disabled',false);
-					$(preId).attr('disabled',false);
+					$(firstId)
+					.attr('disabled',false)
+					.removeClass('paginationDisabled')
+					.attr('title','Go to first page')
+					.find('span.hidden')
+					.html('"Go to first page"');
+
+					$(preId)
+					.attr('disabled',false)
+					.removeClass('paginationDisabled')
+					.attr('title','Go to previous page')
+					.find('span.hidden')
+					.html('"Go to previous page"');
 				}else{
 					//disable
-					$(firstId).attr('disabled',true);
-					$(preId).attr('disabled',true);
+					$(firstId)
+					.attr('disabled',true)
+					.addClass('paginationDisabled')
+					.attr('title','Go to first page disabled')
+					.find('span.hidden')
+					.html('"Go to first page disabled"');
+
+					$(preId)
+					.attr('disabled',true)
+					.addClass('paginationDisabled')
+					.attr('title','Go to previous page disabled')
+					.find('span.hidden')
+					.html('"Go to previous page disabled"');
 				}
 
 				var hasNextPage= (info.pages -currentPage) >0;
 				if(hasNextPage){
 					//enable next and last
-					$(lastId).attr('disabled',false);
-					$(nextId).attr('disabled',false);
+					$(lastId)
+					.attr('disabled',false)
+					.removeClass('paginationDisabled')
+					.attr('title','Go to last page')
+					.find('span.hidden')
+					.html('"Go to last page"');
+
+					$(nextId)
+					.attr('disabled',false)
+					.removeClass('paginationDisabled')
+					.attr('title','Go to next page')
+					.find('span.hidden')
+					.html('"Go to next page"');
 				}else{
 					//disable
-					$(lastId).attr('disabled',true);
-					$(nextId).attr('disabled',true);
+					$(lastId)
+					.attr('disabled',true)
+					.addClass('paginationDisabled')
+					.attr('title','Go to last page disabled')
+					.find('span.hidden')
+					.html('"Go to last page disabled"');
+
+					$(nextId)
+					.attr('disabled',true)
+					.addClass('paginationDisabled')
+					.attr('title','Go to next page disabled')
+					.find('span.hidden')
+					.html('"Go to next page disabled"');
 				}
 
 				var $paginationControlContainer=$(containerId);
@@ -169,10 +214,19 @@
 			setupCustomMessageHandler: function(){
 				var me= this;
 
+				//reset data
+				me._messageBus.subscribe('onClear',function(){
+					console.log(me._name+'=>on Clear', arguments);
+					//reset columns data before another search
+					me.table.columns().search('').draw();
+				});
+
 				me._messageBus.subscribe('onSearch',function(){
 					console.log(me._name+'=>on search', arguments);
 					var searchBy= arguments[1].searchBy || "";
 					var searchTerm= arguments[1].searchTerm || "";
+					//reset columns data before another search
+					me.table.columns().search('');
 					me.table.columns(searchBy).search(searchTerm).draw();
 				});
 				
@@ -206,7 +260,8 @@
 				
 				//on page switching event
 				me.table.on('page.dt', function () {
-					me.enableOrDisablePaginationControls();
+					//console.log('on page switch');
+					//me.enableOrDisablePaginationControls();
 				} );
 
 				var firstId=  this.settings.paginationControls.firstPageControlId;
@@ -225,9 +280,7 @@
 				});
 
 				var nextId=  this.settings.paginationControls.nextPageControlId;
-				console.log('next id:',nextId);
 				$(nextId).on( 'click', function () {
-					console.log('cli');
 					me.table.page('next').draw('page');
 				});
 
@@ -256,7 +309,6 @@
 				var selectedPageId=  this.settings.paginationControls.selectedPageControlId;
 				var totalPages= me.getTotalPages();
 
-				console.log('cc:',me.config.paginationSelectContainer);
 				$.each(me.config.paginationSelectContainer,function(k,v){
 				
 					var $select= $(k).find(selectedPageId);
@@ -280,8 +332,6 @@
 				var me =this;
 				var totalPages= me.getTotalPages();
 				console.log('total records: ',this.table.page.info().recordsTotal);
-
-				me.enableOrDisablePaginationControls();
 
 				//after datatable init, render elements for each section
 				var data=me.table.data();
@@ -311,12 +361,15 @@
 					}
 
 					if(v.render){
+						//get the html content from the render method
+						//then place the html content to the container
 						var content=v.render.call(null,me._messageBus,data, settingInfo);
 						$currentElement=$(content);
 						$currentElement.appendTo($appendTo);
 					}
 
 					if(v.action){
+						//after rending, do action
 						v.action.call(null,$currentElement,me._messageBus, settingInfo);
 					}
 				});
@@ -331,9 +384,8 @@
 
 		// A really lightweight plugin wrapper around the constructor,
 		// preventing against multiple instantiations
-		$.fn[ pluginName ] = function( options ) {
-			
-			var instanceName=pluginName+ '_'+ this.selector.trim();
+		$.fn[pluginName] = function(pluginUniqueName,options) {
+			var instanceName=pluginName+ '_'+ pluginUniqueName;
 			
 			return this.each( function() {
 				if ( !$.data( this, "plugin_" + instanceName ) ) {
