@@ -2,7 +2,6 @@
 
 	"use strict";
 		var pluginName = "CcDataTable";
-		
 		function GetMessageBus(){
 			var bus={};
 			var o = $({});
@@ -287,21 +286,27 @@
 				//after datatable init, render elements for each section
 				var data=me.table.data();
 				$.each(me.settings.sections,function(k,v){
-					console.log(k,v);
-					var $appendTo= $(v.appendTo);
+					var appendToId= v.appendTo.charAt(0)==='#' ? v.appendTo.replace('#','') : v.appendTo;
+					var appendToElement=document.getElementById(appendToId);
+					if(!appendToElement){
+						console.log('appendTo('+appendToId+') for type('+v.type+') must be a valid id');
+						return;
+					}
+					var $appendTo= $(appendToElement);
 					var type=v.type || '';
 					var $currentElement=null;
 					var settingInfo={
-						rootElement: document.querySelector('.'+me._domRootClassName)
+						tableRootElement: document.querySelector('.'+me._domRootClassName)
 					};
 				
 
 					if(type.toLowerCase()==='pagination-select'){
-						me.config.paginationSelectContainer[v.appendTo]=1;
-						$appendTo.each(function(v,i){
-							$(this).append(me.paginationTemplate);
-						});
-
+						var key='#'+appendToId;
+						var hasKey=me.config.paginationSelectContainer[key]!== undefined;
+						if(!hasKey){
+							me.config.paginationSelectContainer[key]=1;
+							$appendTo.append(me.paginationTemplate);
+						}
 						return;
 					}
 

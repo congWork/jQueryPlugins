@@ -15,7 +15,7 @@
 </head>
 
 <body>
-    <div class="top">
+    <div id="top">
 
     </div>
     <table id="example" class="display" style="width:100%">
@@ -44,7 +44,7 @@
         </thead>
       
     </table>
-    <div class="bottom">
+    <div id="bottom">
 
         </div>
     <script type="text/template" id="searchTemplate2">
@@ -117,21 +117,21 @@
                 pageLength: 10,
                 sections:[
                     {
-                        appendTo: '.top',
+                        appendTo: '#top',
                         type: 'pagination-select'
                     },
                     {
-                        appendTo: '.bottom',
+                        appendTo: 'bottom',
                         type: 'pagination-select'
                     },
                     {
-                        appendTo: '.bottom',
+                        appendTo: 'bottom',
                         render: function(messageBus,data){
                              return "<p>Other tools place here</p>";
                         },
                         action: function($element,messageBus,settings){
                            $element.on('click',function(){
-                                var getSelectedItems=   $(settings.rootElement).find('input[type="checkbox"]:checked');
+                                var getSelectedItems=   $(settings.tableRootElement).find('input[type="checkbox"]:checked');
                                 console.log('selcted item:',getSelectedItems);
                             });    
                         }
