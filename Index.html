@@ -46,7 +46,8 @@
     </table>
     <div id="bottom">
 
-        </div>
+    </div>
+    <button id="clickMe">Click Me</button>
     <script type="text/template" id="searchTemplate2">
 
 
@@ -112,11 +113,10 @@
             /*
                 'pagination-select' is a pagination dropdown control/element
        
-
                 usage:
-                get datatable instance from $('#example').CcDataTable('tableUniqueName',options).DataTable();
-                example:
-                var datatableInstance= $('#example').CcDataTable('tableUniqueName',options).DataTable();
+                 $('#example').CcDataTable('tableUniqueName',options,function(dataTable){
+                    console.log('dataTable instance: ',dataTable);
+                });
 
                 custom events:
                 ['onSearch', 'onClear',onTotalRecordsChanged]
@@ -173,7 +173,11 @@
                 ],
 
            };
-           $('#example').CcDataTable('tableUniqueName',options);
+           $('#example').CcDataTable('tableUniqueName',options,function(dataTable){
+              console.log('dataTable instance: ',dataTable);
+           });
+           
+
         });
        
     </script>

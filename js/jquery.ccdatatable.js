@@ -19,7 +19,7 @@
 		
 
 		// The actual plugin constructor
-		function Plugin ( element, options, pluginIntanceName ) {
+		function Plugin ( element, options, pluginIntanceName,callBack ) {
 			var me= this;
 			this.element = element;
 			this._name = pluginIntanceName;
@@ -77,7 +77,9 @@
 			//create datatable instance, then init this plugin
 			this.table= $(this.element).on( 'init.dt', function (){
 				me.init();
+				callBack(me.table);
 			}).DataTable(this.settings);
+			
 		}
 
 		// Avoid Plugin.prototype conflicts
@@ -384,14 +386,14 @@
 
 		// A really lightweight plugin wrapper around the constructor,
 		// preventing against multiple instantiations
-		$.fn[pluginName] = function(pluginUniqueName,options) {
+		$.fn[pluginName] = function(pluginUniqueName,options,callBack) {
 			var instanceName=pluginName+ '_'+ pluginUniqueName;
 			
 			return this.each( function() {
 				if ( !$.data( this, "plugin_" + instanceName ) ) {
 					console.log('creating plugin instance: ',instanceName);
 					$.data( this, "plugin_" +
-						instanceName, new Plugin( this, options, instanceName) );
+						instanceName, new Plugin( this, options, instanceName,callBack) );
 				}
 			} );
 		};
