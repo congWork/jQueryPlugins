@@ -40,7 +40,7 @@
 				totalRecordsControlId: 'totalRecords',
 				containerId: 'paginationContainer'
 			 };
-			this.paginationTemplate='<div class="totalRecords"  data-name="{{totalRecordsControlId}}">Total Records : 0</div> \
+			this.paginationTemplate='<div class="totalRecords">Total Records : <span class="bold" data-name="{{totalRecordsControlId}}">0</span></div> \
 		<div class="paginationTools" data-name="{{containerId}}"> \
 		<button class="fa fa-fast-backward paginationIcon paginationDisabled" data-name="{{firstPageControlId}}" type="button" title="Go to first page disabled"><span class="hidden" aria-hidden="false">"Go to first page disabled"</span></button> \
 		<button class="fa fa-step-backward paginationIcon paginationDisabled" data-name="{{prePageControlId}}" type="button" title="Go to previous page disabled"><span class="hidden" aria-hidden="false">"Go to previous page disabled"</span></button> \
@@ -77,7 +77,10 @@
 			//create datatable instance, then init this plugin
 			this.table= $(this.element).on( 'init.dt', function (){
 				me.init();
-				callBack(me.table);
+				if(callBack && (typeof callBack)==='function'){
+					callBack.call(me.element,me.table);
+				}
+				
 			}).DataTable(this.settings);
 			
 		}
@@ -235,7 +238,7 @@
 				me._messageBus.subscribe('onTotalRecordsChanged',function(){
 					var totalRecords= arguments[1] || 0;
 					console.log('onTotalRecordsChanged',totalRecords);
-					$(me.settings.paginationControls.totalRecordsControlId).html("Total Records : "+ totalRecords);
+					$(me.settings.paginationControls.totalRecordsControlId).html(totalRecords);
 				});
 			},
 			setupEventsListener: function(){
@@ -257,7 +260,7 @@
 				//on page(records per page) length changed event
 				me.table.on( 'length.dt', function ( e, settings, len ) {
 					console.log( 'New page length: '+len );
-					me.renderElements();
+					//me.renderElements();
 				} );
 				
 				//on page switching event
