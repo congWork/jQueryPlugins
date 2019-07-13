@@ -1,5 +1,133 @@
 ;( function( $, window, document, undefined ) {
+       /*
+                //How to use? Example:
 
+                var options={
+                  pageLength: 25,
+                  sections:[
+                    {
+                        appendTo: '#PaginationContainer', 
+                        type: 'pagination-select' //since this is a build-in type, 'render' and 'action' are not needed
+                    },
+                    {
+                        appendTo: '#WorkUnitDt_NoRecordFound',
+                        render: function(messageBus,data,settingInfo){
+                             return '<div class="noRecordFound">No Records found</div>';
+                        },
+                        action: function($element,messageBus,settingInfo){
+                          //show and hide 'no record' message
+                            messageBus.subscribe('onTotalPageChanged',function(e,totalPage){
+                                if (totalPage < 1) {
+                                    $element.show();
+                                } else {
+                                    $element.hide();
+                                }
+                            });
+                        }
+                    },
+                    {
+                        appendTo: '#WorkUnitTableSearchToolbarContainer',
+                        render: function (messageBus, data, settingInfo) {
+                            return $('#WorkUnitTableSearchToolbarTemplate').html();
+                        },
+                        action: function($element,messageBus,settingInfo){
+                            $element.find('input[name="Search"]').on('click',function(){
+                                var searchBy= $element.find('#searchWorkUnit').val();
+                                var searchTerm = $element.find('#searchWorkUnitBox').val();
+                                if (searchTerm && searchBy) {
+                                     messageBus.publish('onSearch',{searchBy: parseInt(searchBy, 10),searchTerm: searchTerm});
+                                }
+                            });
+
+                            //clear search term when search by dropdown on change
+                            $element.find('#searchWorkUnit').on('change', function () {
+                                  $element.find('#searchWorkUnitBox').val('');
+                            });
+
+                            //clear button on click, reset all inputs
+                            $element.find('input[name="Clear"]').on('click', function () {
+                                  $element.find('#searchWorkUnit').val(1);
+                                  $element.find('#searchWorkUnitBox').val('');
+                                  messageBus.publish('onClear');
+                            });
+                        }
+                     }
+                ],
+                ajax: {
+                    type: "POST",
+                    url: "/ManageRelations.aspx/GetWorkUnitData",
+                    dataSrc: 'd',
+                    data: {},
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json"
+                },
+                columns: [ 
+                    {
+                        "orderable": false,
+                        "render": function (data, type, full, meta) {
+                            return '<label class="hidden" aria-hidden="false" for="checkbox'+full.WorkUnitSeqNo+'">"Select this checkbox"</label> \
+                        <input type="checkbox" class="appraisalSelect" title="Select this checkbox" id="checkbox'+full.WorkUnitSeqNo+'">';
+                        }
+                    },
+                    {"data": "WorkUnitSeqNo"},
+                    { "data": "PaAdminName" },
+                    {"data": "CommissionerName"},
+                     {"data": "TotalEmployees"}
+                ],
+
+           };
+            $('#WorkUnitTable').CcDataTable('workUnitTable', options, function (dt) {
+                window.myDtTable = dt;
+
+               //append html for number of records per page dropdown
+                //set default selected value
+                //set up on change event listener
+                $('#PaginationContainer .totalRecords').append($('#NumOfRecordsPerPageTemplate').html());
+                $('#PaginationContainer #paginationRows').val(dt.page.len()).on('change', function () {
+                    var newVal = parseInt($(this).val());
+                    console.log('numOfRecordsPerPage on changed: ', newVal);
+                    dt.page.len(newVal).draw();
+                });
+
+                //table checkboxes
+                //// Show hide approve all button
+	            var appraisalSelectAll = $(this).find('#appraisalSelectAll2');
+	            var appraisalSelect = $(this).find('.appraisalSelect');
+	            var appraisalAnySelect =  $(this).find('.appraisalSelect , #appraisalSelectAll2');
+	            var btnApprove = $('.btnApprove');
+	            appraisalSelectAll.click(function () {
+		            if (appraisalSelectAll.is(':checked')) {
+			            appraisalSelect.prop("checked", true);
+		            } else {
+			            appraisalSelect.prop("checked", false);
+		            }
+	            });
+	            appraisalAnySelect.click(function(){
+		            if (appraisalSelect.is(':checked')) {
+			            btnApprove.fadeIn();
+		            } else {
+			            btnApprove.fadeOut();
+		            }
+                });
+
+                dt.on('draw.dt', function () {
+                    appraisalSelectAll.prop('checked', false);
+                    appraisalSelect.prop("checked", false);
+                    btnApprove.fadeOut();
+                });
+
+            });
+
+
+              custom events:
+                ['onSearch', 'onClear','onTotalRecordsChanged']
+
+                section node:
+                appendTo--> must be a dom element id, this indicate where you want to place your html contents in the render property
+                type--> the type of node, current build-in types are supported: ['pagination-select']
+                render--> (optional) a function that returns your html content to be rendered
+                action--> (optional) a function that happens after system renders your html content, system is expecting you to put your "to do stuff"
+            */
 	"use strict";
 		var pluginName = "CcDataTable";
 		function GetMessageBus(){
@@ -40,7 +168,7 @@
 				totalRecordsControlId: 'totalRecords',
 				containerId: 'paginationContainer'
 			 };
-			this.paginationTemplate='<div class="totalRecords"  data-name="{{totalRecordsControlId}}">Total Records : 0</div> \
+			this.paginationTemplate='<div class="totalRecords">Total Records : <span class="bold" data-name="{{totalRecordsControlId}}">0</span></div> \
 		<div class="paginationTools" data-name="{{containerId}}"> \
 		<button class="fa fa-fast-backward paginationIcon paginationDisabled" data-name="{{firstPageControlId}}" type="button" title="Go to first page disabled"><span class="hidden" aria-hidden="false">"Go to first page disabled"</span></button> \
 		<button class="fa fa-step-backward paginationIcon paginationDisabled" data-name="{{prePageControlId}}" type="button" title="Go to previous page disabled"><span class="hidden" aria-hidden="false">"Go to previous page disabled"</span></button> \
@@ -77,7 +205,10 @@
 			//create datatable instance, then init this plugin
 			this.table= $(this.element).on( 'init.dt', function (){
 				me.init();
-				callBack(me.table);
+				if(callBack && (typeof callBack)==='function'){
+					callBack.call(me.element,me.table);
+				}
+				
 			}).DataTable(this.settings);
 			
 		}
@@ -239,7 +370,7 @@
 				me._messageBus.subscribe('onTotalRecordsChanged',function(){
 					var totalRecords= arguments[1] || 0;
 					console.log('onTotalRecordsChanged',totalRecords);
-					$(me.settings.paginationControls.totalRecordsControlId).html("Total Records : "+ totalRecords);
+					$(me.settings.paginationControls.totalRecordsControlId).html(totalRecords);
 				});
 			},
 			setupEventsListener: function(){
@@ -261,7 +392,7 @@
 				//on page(records per page) length changed event
 				me.table.on( 'length.dt', function ( e, settings, len ) {
 					console.log( 'New page length: '+len );
-					me.renderElements();
+					//me.renderElements();
 				} );
 				
 				//on page switching event
