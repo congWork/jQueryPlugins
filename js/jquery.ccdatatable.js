@@ -227,9 +227,13 @@
 					console.log(me._name+'=>on search', arguments);
 					var searchBy= arguments[1].searchBy || "";
 					var searchTerm= arguments[1].searchTerm || "";
+
+					var regex= arguments[2] || false;
+					var smart= arguments[3] || true;
+					var caseInsen=arguments[4] || true;
 					//reset columns data before another search
 					me.table.columns().search('');
-					me.table.columns(searchBy).search(searchTerm).draw();
+					me.table.columns(searchBy).search(searchTerm,regex,smart,caseInsen).draw();
 				});
 				
 				me._messageBus.subscribe('onTotalRecordsChanged',function(){
@@ -372,7 +376,7 @@
 
 					if(v.action){
 						//after rending, do action
-						v.action.call(null,$currentElement,me._messageBus, settingInfo);
+						v.action.call(null,$currentElement,me._messageBus, settingInfo,data);
 					}
 				});
 
