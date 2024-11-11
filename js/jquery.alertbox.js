@@ -57,6 +57,17 @@
 						right: -21px;
 						line-height: 20px;
 					}
+					#maintenanceTitle{
+						padding-left: 5px;
+					}
+					.h4{
+						font-size: 1.25rem;
+						font-weight: 500;
+						line-height: 1.2;
+					}
+					.maintenanceIcon{
+						font-style: normal;
+					}
 			</style>`;
 
 			var defaults = {
@@ -70,7 +81,7 @@
 			
 			this.alertTemplate=`<div class="alertBox alert-block" id="{{pluginInstanceName}}">
 							<button type="button" class="alertBox-close">&times;</button>
-							<h4 id="maintenanceTitle">{{title}}</h4>
+							<div class="h4"><i class="maintenanceIcon" aria-hidden="true">&#9888</i><span id="maintenanceTitle">{{title}}</span></div>
 							<p id="maintenanceMsg">
 							{{message}}
 							</p>
@@ -116,7 +127,7 @@
 						dataType: 'json', 
 						contentType: "application/json;charset=utf-8",
 						success: function(data) {
-							me.setMaintenanceMessage(data.title,data.body);
+							me.setMaintenanceMessage(data.title,data.message);
 							me.showAlert(new Date(data.startDatetime), new Date(data.endDatetime));
 						},
 						error: function(xhr, status, error) {
