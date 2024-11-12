@@ -119,7 +119,9 @@
 					}
 				});
 
-				if(me.settings.url){
+				var isDismissClicked= sessionStorage.getItem(me._isDismissedKey);
+
+				if(me.settings.url && !isDismissClicked){
 					$.ajax({
 						url: me.settings.url, 
 						type: 'get', 
